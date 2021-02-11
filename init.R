@@ -1,3 +1,7 @@
+# This file is to setup the LGM benchmarking scripts in the repository
+# created by Laia Comas-Bru in Feb 2021
+
+
 rm = (list = ls())
 graphics.off()
 
