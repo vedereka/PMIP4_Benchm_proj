@@ -45,7 +45,7 @@ rm(ls="bart_wf", "bart_wof", "prent_all")
 # 2. identify how many Bart sites are in each gridcell
 # 3. filter Cleator data to just that spread of data
 
-ncfname <- paste(getwd(), "/input_data_obs/raw_data/mat_delta_21ka_ALL_grid_2x2.nc", sep="") 
+ncfname <- paste(dataobspath, "raw_data/mat_delta_21ka_ALL_grid_2x2.nc", sep="") 
 ncin <- nc_open(ncfname)
 lat <- ncin[["dim"]][["lat"]][["vals"]]
 lon <- ncin[["dim"]][["lon"]][["vals"]]

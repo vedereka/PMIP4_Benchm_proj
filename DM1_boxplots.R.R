@@ -1,4 +1,6 @@
-
+### produce data-model latitudinal boxplots
+# Created by Laia Comas-Bru in October 2020
+# Last modified: February 2021
 
 #### LOAD OBSERVATIONS AND ORGANISE DATA ####  files produced in Step0 extract site data
 data_obs <- read.csv(file.path(dataobspath, "data_obs_raw.csv"), na.strings = "NA",strip.white = TRUE, blank.lines.skip = T) %>% 
@@ -248,7 +250,7 @@ bp <- ggplot(na.omit(data_all), aes(x=lat_band, y=value, fill=REF)) +
 
 print(bp)
 
-require(facetscales)
+require(facetscales) # install with devtools::install_github("zeehio/facetscales")
 
 scales_y <- list(
     GDD5 = scale_y_continuous(breaks=scales::extended_breaks(n=3),limits=c(1500,-4000)),

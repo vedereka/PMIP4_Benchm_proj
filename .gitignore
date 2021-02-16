@@ -1,3 +1,36 @@
 .Rhistory
 .RData
 .Rproj.user
+
+#dataobspath
+/input_data_obs/
+
+#pmip_ncpath
+/input_pmip4_nc/
+
+#shapfiles called in functions_source
+/input_coast_shapefile/
+
+#CRU climatology data files to run splash
+/input_CRU_CL_2.0/
+
+# general output directory
+/output/
+
+# plots directory
+/output_plots
+
+#rdspath
+/output_rds_temp/
+
+#ncpath
+/output_netcdf/
+
+#temporary RDS files from Mod1
+/output_rds_temp/
+
+#temporary splash data from Dat0
+/splash_data_temp/
+
+#packages downloaded to produce scores (from Douglas Kelley repository)
+/packages_downloaded/

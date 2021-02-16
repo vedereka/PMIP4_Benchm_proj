@@ -5,6 +5,8 @@
 
 
 #### LOAD OBSERVATIONS AND ORGANISE DATA #### 
+#don't have MI_SD (added a col with NAs in the CSV source file till that's fixed.)
+
 bart <- read.csv(paste (dataobspath,"bartlein_converted.csv",sep="")) %>% 
   mutate (INVERSION = as.factor(INVERSION), MAT_max = MAT + MAT_SD , MTCO_max = MTCO + MTCO_SD, 
           MTWA_max = MTWA + MTWA_SD, MAP_max = MAP + MAP_SD, MI_max = MI_converted + MI_converted_SD,
@@ -122,23 +124,23 @@ ggsave(plot(data_BarPre[,c(-1,-2,-9)]), file=paste(plotpath, "dat_boxplots_maps/
 
 var_ls <- c("MAT","MTCO","MTWA","MAP","MI","GDD5")
 
-for (var in var_ls){
+for (variab in var_ls){
 
-p1 <- mp + geom_point(data = data_BarPre %>% dplyr::select(LAT,LON,var,REF) %>%
+p1 <- mp + geom_point(data = data_BarPre %>% dplyr::select(LAT,LON,variab,REF) %>%
                         na.omit(), aes (x = LON, y = LAT, color = as.factor(REF)),
                       alpha = 1, stroke = 1, show.legend = F, size = 0.3) +
       theme_bw() +
-      labs(title = paste("Raw data: ",var,sep=""), color = "Data source") +
+      labs(title = paste("Raw data: ",variab,sep=""), color = "Data source") +
       theme(legend.position = c(0.095, 0.24), legend.box = "horizontal") +
       theme(legend.title = element_text(colour = "black", size = 8, face = "bold" )) +
       theme(legend.text = element_text(colour = "black", size = 8)) +
       theme(legend.background = element_rect(fill = "white",size = 0.4,linetype = "solid",colour = "black"))
 
-p2 <- mp + geom_point(data = data_Cle %>% dplyr::select(LAT,LON,var,REF) %>% 
+p2 <- mp + geom_point(data = data_Cle %>% dplyr::select(LAT,LON,variab,REF) %>% 
                         na.omit(), aes (x = LON, y = LAT, color = as.factor(REF)),
                       alpha = 1, stroke = 1, show.legend = F, size = 0.1) +
       theme_bw() +
-      labs(title = paste("Raw data: ",var,sep=""), color = "Data source") +
+      labs(title = paste("Raw data: ",variab,sep=""), color = "Data source") +
       theme(legend.position = c(0.095, 0.24),legend.box = "horizontal") +
       theme(legend.title = element_text(colour = "black",size = 8,face = "bold")) +
       theme(legend.text = element_text(colour = "black", size = 8)) +
@@ -150,8 +152,8 @@ fig <- ggarrange(p1, p2,
                  ncol = 1, nrow = 2)
 fig
 
-ggsave(fig,file=paste(plotpath, "dat_boxplots_maps/map_raw_sites_",var,".jpg", sep = ""),width = 11.69,height = 8.27)
-#ggsave(fig,file=paste(plotpath, "dat_boxplots_maps/map_raw_sites_",var,".pdf", sep = ""),width = 11.69,height = 8.27)
+ggsave(fig,file=paste(plotpath, "dat_boxplots_maps/map_raw_sites_",variab,".jpg", sep = ""),width = 11.69,height = 8.27)
+#ggsave(fig,file=paste(plotpath, "dat_boxplots_maps/map_raw_sites_",variab,".pdf", sep = ""),width = 11.69,height = 8.27)
 
 rm(ls="p1","p2","fig")
 }
@@ -240,12 +242,12 @@ rm(ls="n","x_temp","newx","grid")
 # cairo_pdf(paste(plotpath, Sys.Date(), '_sites_overlap_grids_per_variable.pdf', sep = ""),
 #           width = 11.69,height = 8.27,onefile = T)
 
-for (var in var_ls){
+for (variab in var_ls){
 
   data_plot <- grid_BartPren %>% 
-    dplyr::select(lat,lon,var,count_n,REF) %>%
+    dplyr::select(lat,lon,variab,count_n,REF) %>%
     na.omit() %>%
-    semi_join(.,grid_Cle %>% dplyr::select(lat,lon,var,count_n,REF)%>% na.omit(),
+    semi_join(.,grid_Cle %>% dplyr::select(lat,lon,variab,count_n,REF)%>% na.omit(),
               by =c("lon","lat"))
   
 p <- mp +
@@ -260,7 +262,7 @@ p <- mp +
         plot.title = element_text(size = 8, face = "bold"))+
   labs(title = var)#,color = "counts (FYI, data averaged)")
 
-assign(paste(var,"_plot", sep=""),p)
+assign(paste(variab,"_plot", sep=""),p)
 
 rm(ls="p","data_plot")
 }
@@ -306,16 +308,16 @@ rm(ls="brkpnt","startpnt","endpnt","brk_lab")
 cairo_pdf(paste(plotpath, "dat_boxplots_maps/boxplot_20deg_latbands_pervar.pdf", sep = ""),onefile = T,width = 8.27 ,height = 11.69)
 plotlist = list()
 
-for (var in var_ls){
+for (variab in var_ls){
 
 # prepare dataframe with chosen variable and no NAs and rename variable to VAR
-  data_ls1 <- dtBP %>% dplyr::select(lat,lon,var,lat_band,source) %>% na.omit() 
-  data_ls2 <- dtCL %>% dplyr::select(lat,lon,var,lat_band,source) %>% na.omit() 
+  data_ls1 <- dtBP %>% dplyr::select(lat,lon,variab,lat_band,source) %>% na.omit() 
+  data_ls2 <- dtCL %>% dplyr::select(lat,lon,variab,lat_band,source) %>% na.omit() 
   
   data_ls1 <- semi_join(data_ls1,data_ls2, by =c("lon","lat"))# select the intersect between the two dataframes
   data_ls2 <- semi_join(data_ls2,data_ls1, by =c("lon","lat"))# select the intersect between the two dataframes
   
-  data_ls3<- dtCL_all %>% dplyr::select(lat,lon,var,lat_band,source) %>% na.omit() 
+  data_ls3<- dtCL_all %>% dplyr::select(lat,lon,variab,lat_band,source) %>% na.omit() 
   
   dtcomb <- rbind(data_ls1, data_ls2, data_ls3)
   dtcomb$source <- factor(dtcomb$source)
@@ -331,16 +333,16 @@ for (var in var_ls){
   dtsum2 <- subset(counts, source == 'CL')
   dtsum3 <- subset(counts, source == 'CL_all')
   
-  assign(paste(var,"_dataplot", sep=""),dtcomb)
+  assign(paste(variab,"_dataplot", sep=""),dtcomb)
   
-  p <- ggplot(data = get(paste(var,"_dataplot", sep="")),
-              aes(x = lat_band, y = get(paste(var,"_dataplot", sep=""))[,var],
+  p <- ggplot(data = get(paste(variab,"_dataplot", sep="")),
+              aes(x = lat_band, y = get(paste(variab,"_dataplot", sep=""))[,variab],
                   fill = source)) +
     # stat_boxplot(geom = 'errorbar') +
     geom_boxplot(outlier.alpha = 0.7, width = 0.8,position = position_dodge2(preserve = "single")) +
       theme_bw() +
     xlab('Latitude band') +
-    ylab(var) +
+    ylab(variab) +
     scale_fill_manual(
       name = 'source',
       breaks = c('BP', 'CL', 'CL_all'),
@@ -367,7 +369,7 @@ for (var in var_ls){
   
   print(p)
   #rm(ls="p","data_ls1","data_ls2","data_ls3","yrange","ymin","ymax","counts","dtsum1","dtsum2","dtsum3")
-  ggsave(p,file=paste(plotpath, "dat_boxplots_maps/data_boxplot_",var,".jpg", sep=""),width = 6.5,height = 8.27)
+  ggsave(p,file=paste(plotpath, "dat_boxplots_maps/data_boxplot_",variab,".jpg", sep=""),width = 6.5,height = 8.27)
   
 }
 
@@ -421,16 +423,16 @@ dtCL_all <-
 
 cairo_pdf(paste(plotpath, "dat_boxplots_maps/boxplot_regions.pdf", sep = ""),onefile = T,width = 8.27 ,height = 11.69)
 
-for (var in var_ls){
+for (variab in var_ls){
   
   # prepare dataframe with chosen variable and no NAs and rename variable to VAR
-  data_ls1 <- dtBP %>% filter(region != "other") %>% dplyr::select(lat,lon,var,region,source) %>% na.omit() 
-  data_ls2 <- dtCL %>% filter(region != "other") %>% dplyr::select(lat,lon,var,region,source) %>% na.omit() 
+  data_ls1 <- dtBP %>% filter(region != "other") %>% dplyr::select(lat,lon,variab,region,source) %>% na.omit() 
+  data_ls2 <- dtCL %>% filter(region != "other") %>% dplyr::select(lat,lon,variab,region,source) %>% na.omit() 
   
   data_ls1 <- semi_join(data_ls1,data_ls2, by =c("lon","lat"))# select the intersect between the two dataframes
   data_ls2 <- semi_join(data_ls2,data_ls1, by =c("lon","lat"))# select the intersect between the two dataframes
   
-  data_ls3<- dtCL_all %>% filter(region != "other") %>% dplyr::select(lat,lon,var,region,source) %>% na.omit(data_ls3) 
+  data_ls3<- dtCL_all %>% filter(region != "other") %>% dplyr::select(lat,lon,variab,region,source) %>% na.omit(data_ls3) 
   
   dtcomb <- rbind(data_ls1, data_ls2, data_ls3) %>% mutate(source = as.factor(source))
   
@@ -450,7 +452,7 @@ for (var in var_ls){
     geom_boxplot(outlier.alpha = 0.7, width = 0.8, position = position_dodge2(preserve = "single")) +
     theme_bw() +
     xlab('Region') +
-    ylab(var) +
+    ylab(variab) +
     scale_fill_manual(
       name = 'source',
       breaks = c('CL', 'BP', 'CL_all'),
@@ -477,7 +479,7 @@ for (var in var_ls){
   print(pcomb)
   
   rm(ls="pcomb","data_ls1","data_ls2","yrange","ymin","ymax","counts","dtsum1","dtsum2")
-  ggsave(p,file=paste(plotpath, "dat_boxplots_maps/data_boxplot_region_",var,".jpg", sep=""),width = 6.5,height = 8.27)
+  ggsave(p,file=paste(plotpath, "dat_boxplots_maps/data_boxplot_region_",variab,".jpg", sep=""),width = 6.5,height = 8.27)
   
 }
 
@@ -489,13 +491,13 @@ dBP_g <- gather (dtBP, key="variable",value="value", MAT, MTCO, MTWA, MAP, MI, G
 dCL_g <- gather (dtCL, key="variable",value="value", MAT, MTCO, MTWA, MAP, MI, GDD5)
 
 
-for (var in var_ls){
+for (variab in var_ls){
   
   # filter by variable
-  dBP_gat <- dBP_g %>% dplyr::select(lat,lon,variable,value) %>% filter(variable==var) %>% 
+  dBP_gat <- dBP_g %>% dplyr::select(lat,lon,variable,value) %>% filter(variable==variab) %>% 
     dplyr::rename(var_BP = variable, val_BP = value) 
   
-  dCL_gat <- dCL_g %>% dplyr::select(lat,lon,variable,value) %>% filter(variable==var) %>% 
+  dCL_gat <- dCL_g %>% dplyr::select(lat,lon,variable,value) %>% filter(variable==variab) %>% 
     dplyr::rename(var_CL = variable, val_CL = value) 
   
   
@@ -512,13 +514,13 @@ for (var in var_ls){
     geom_smooth(method='lm', show.legend = NA,inherit.aes = TRUE,formula = y ~x, se = TRUE,
                 weight=0.5, color = "darkred", size = 0.5) +
     theme_bw()+
-    labs(title = paste ("",var,".",sep=""),
+    labs(title = paste ("",variab,".",sep=""),
          x = "Bartlein + Prentice",
          y = "Cleator")+
     geom_abline(intercept = 0,slope=1, color = "black", linetype="dotted", size=1) +
     stat_cor()       # Add correlation coefficient
   
-  assign(paste(var,"_plot", sep=""),p)
+  assign(paste(variab,"_plot", sep=""),p)
   
   #print(p)
   

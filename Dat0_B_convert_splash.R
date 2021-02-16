@@ -30,8 +30,8 @@ CRUncpath <- paste(dirname(getwd()), "/benchm_data//input_CRU_CL_2.0/", sep="")
 
 # load splash functions (the order is important)
 source(paste(getwd(), "/splash_r_prentice/data.R", sep=""))
-#source(paste(getwd(), "/splash_r_prentice/const.R", sep=""))
-#source(paste(getwd(), "/splash_r_prentice/evap.R", sep=""))
+source(paste(getwd(), "/splash_r_prentice/const.R", sep=""))
+source(paste(getwd(), "/splash_r_prentice/evap.R", sep=""))
 source(paste(getwd(), "/splash_r_prentice/splash.R", sep=""))
 
 # load data
@@ -174,5 +174,3 @@ for (i in 1:length(id_ls)){
 
 write.csv(site_data, paste (dataobspath,"bartlein_converted_",Sys.Date(),".csv",sep=""), row.names = F)
 #write.csv(site_data, paste (dataobspath,"bartlein_converted.csv",sep=""), row.names = F)
-
-cat(paste("Output at: \nTemporary RDS files: ",outputtemppath, "\nBart MI data: ",paste (dataobspath,"bartlein_converted_",Sys.Date(),".csv",sep=""), sep=""))

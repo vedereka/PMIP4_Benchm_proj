@@ -56,7 +56,7 @@ DM2_run_comparison_scores.R
 Produces csv files with the benchmarking scores (with observational uncertainties). Output: \output_scores
 
 DM3_scatterplots.R
-Produces data-model scatterplots (same extraction as for scores in DM2).
+Produces data-model scatterplots (same extraction as for scores in DM2). Make sure that L84 is fixed according to your own wd path (in this case, 55 is triming the entire path until the first letter of the model and "17" is removing "_LGM_anomalies.nc"
 Output: \output_plots\DM_scatterplots
 
 DM4_plot_scores.R

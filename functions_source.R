@@ -113,7 +113,7 @@ quiet <- function(x) {
 } 
 
 #### Read in shape file for plotting #### 
-quiet(shapefile <- readOGR(dsn=paste(dirname (getwd()), "/benchm_data/input_coast_shapefile/ne_110m_land/ne_110m_land.shp", sep=""), layer = 'ne_110m_land')) #laptop
+quiet(shapefile <- readOGR(dsn=paste(getwd(), "/input_coast_shapefile/ne_110m_land/ne_110m_land.shp", sep=""), layer = 'ne_110m_land')) #laptop
 shapefile_df_360 <- fortify(shapefile)
 
 # #arrange longitudes to be from 0 to 360 instead of -180 to 180
@@ -122,7 +122,7 @@ shapefile_df_360$long[index] <- (shapefile_df_360$long[index] +360)
 rm(index)
 rm(shapefile)
 
-quiet(shapefile <- readOGR(dsn=paste(dirname (getwd()), "/benchm_data/input_coast_shapefile/ne_110m_land_360/ne_110m_land.shp", sep=""), layer = 'ne_110m_land')) #laptop
+quiet(shapefile <- readOGR(dsn=paste(getwd(), "/input_coast_shapefile/ne_110m_land_360/ne_110m_land.shp", sep=""), layer = 'ne_110m_land')) #laptop
 shapefile_df_180 <- fortify(shapefile)
 
 rm(shapefile)

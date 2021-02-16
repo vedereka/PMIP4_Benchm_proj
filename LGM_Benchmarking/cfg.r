@@ -1,7 +1,7 @@
 
-source(paste(dirname(getwd()),"/packages_downloaded/gitProjectExtras/gitBasedProjects/R/sourceAllLibs.r", sep=""))
-sourceAllLibs(paste(dirname(getwd()),"/packages_downloaded/gitProjectExtras/gitBasedProjects/R/", sep=""))
-sourceAllLibs(paste(dirname(getwd()),"/packages_downloaded/benchmarkMetrics/", sep=""))
+source(paste(getwd(),"/packages_downloaded/gitProjectExtras/gitBasedProjects/R/sourceAllLibs.r", sep=""))
+sourceAllLibs(paste(getwd(),"/packages_downloaded/gitProjectExtras/gitBasedProjects/R/", sep=""))
+sourceAllLibs(paste(getwd(),"/packages_downloaded/benchmarkMetrics/", sep=""))
 
 ## uncomment on windows
 #source('../gitProjectExtras/package_git2r.r')
@@ -17,7 +17,7 @@ sourceAllLibs(paste(getwd(),"/LGM_Benchmarking/src/metrics/", sep=""))
 sourceAllLibs(paste(getwd(),"/LGM_Benchmarking/src/plotting/", sep=""))
 sourceAllLibs(paste(getwd(),"/LGM_Benchmarking/src/postProcessing/", sep=""))
 sourceAllLibs(paste(getwd(),"/LGM_Benchmarking/src/processModelOutputs/", sep=""))
-sourceAllLibs(paste(dirname(getwd()),"/packages_downloaded/rasterextrafuns/rasterPlotFunctions/R/", sep=""))
+sourceAllLibs(paste(getwd(),"/packages_downloaded/rasterextrafuns/rasterPlotFunctions/R/", sep=""))
 
 
 # Source functions needed to create the scores in XXXx.R file
