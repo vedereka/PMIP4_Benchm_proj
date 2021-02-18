@@ -25,8 +25,8 @@
 
 
 # set paths not in init.R and load site data
-outputtemppath <- paste(dirname(getwd()), "/benchm_data/splash_data_temp/", sep="") 
-CRUncpath <- paste(dirname(getwd()), "/benchm_data//input_CRU_CL_2.0/", sep="")
+outputtemppath <- paste(getwd(), "/splash_data_temp/", sep="") 
+CRUncpath <- paste(getwd(), "/input_CRU_CL_2.0/", sep="")
 
 # load splash functions (the order is important)
 source(paste(getwd(), "/splash_r_prentice/data.R", sep=""))

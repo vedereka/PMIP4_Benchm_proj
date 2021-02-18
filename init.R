@@ -5,7 +5,7 @@ rm = (list = ls())
 graphics.off()
 
 # set wd (revise as necessary)
- setwd("D:/Dropbox/Benchm_LGM/PMIP4_Benchm_proj")
+ setwd("G:/GDT/OneDrive - University of Reading/Paleoclimate/R_code/Code/PMIP4_Benchm_proj")
 
 # load contributed packages
 if(!require("pacman")) install.packages ("pacman")
@@ -19,7 +19,7 @@ options("rgdal_show_exportToProj4_warnings"="none")
 library(rgdal)
 
 # load functions 
-source('functions_source.R')#load functions and coast shapefile
+source('functions_source.R')  #load functions and coast shapefile
 
 # setup paths
 # data paths, in main directory, now in gitignore (=not recorded in Git)
@@ -27,6 +27,7 @@ dataobspath <- paste(getwd(), "/input_data_obs/", sep="")
 pmip_ncpath <- paste(getwd(), "/input_pmip4_nc/", sep="")
 rdspath <- paste(getwd(), "/output_rds_temp/", sep="") 
 ncpath <- paste(getwd(), "/output_netcdf/", sep="")
+
 
 #within working directory
 plotpath <- paste(getwd(), "/output_plots/", sep="") 
