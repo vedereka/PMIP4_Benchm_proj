@@ -1,18 +1,18 @@
 ### create data boxplots (with Bartlein and Cleator for overlapping sites)
 # create maps of Bartlein sites with/without inversions as well as maps with data available for each variable
 # Created by Laia Comas-Bru in September 2020
-# Last modified: February 2021
-
+# Last modified: February 2021Note: MI_converted_SD not calculated (as is it is using MI)
 
 #### LOAD OBSERVATIONS AND ORGANISE DATA #### 
 #don't have MI_SD (added a col with NAs in the CSV source file till that's fixed.)
 
 bart <- read.csv(paste (dataobspath,"bartlein_converted.csv",sep="")) %>% 
   mutate (INVERSION = as.factor(INVERSION), MAT_max = MAT + MAT_SD , MTCO_max = MTCO + MTCO_SD, 
-          MTWA_max = MTWA + MTWA_SD, MAP_max = MAP + MAP_SD, MI_max = MI_converted + MI_converted_SD,
-          GDD5_max = GDD5 + GDD5_SD, MI_max = MI_converted + MI_converted_SD,
+          MTWA_max = MTWA + MTWA_SD, MAP_max = MAP + MAP_SD, MI_max = MI_converted,# + MI_converted_SD,
+          GDD5_max = GDD5 + GDD5_SD, MI_max = MI_converted ,#+ MI_converted_SD,
           MAT_min = MAT - MAT_SD, MTCO_min = MTCO - MTCO_SD, MTWA_min = MTWA - MTWA_SD, 
-          MAP_min = MAP - MAP_SD, MI_min = MI_converted - MI_converted_SD, GDD5_min = GDD5 - GDD5_SD)
+          MAP_min = MAP - MAP_SD, MI_min = MI_converted,# - MI_converted_SD,
+          GDD5_min = GDD5 - GDD5_SD)
 
 #numb of sites with no inv
 # bart %>% filter (INVERSION == "NO") %>% select (SAMPLE_ID) %>% dim(.)

@@ -1,11 +1,11 @@
 # This file is to setup the LGM benchmarking scripts in the repository
 # created by Laia Comas-Bru in Feb 2021
 
-rm = (list = ls())
+rm (list = ls())
 graphics.off()
 
 # set wd (revise as necessary)
- setwd("D:/Dropbox/Benchm_LGM/PMIP4_Benchm_proj")
+ # setwd("D:/Dropbox/Benchm_LGM/PMIP4_Benchm_proj")
 
 # load contributed packages
 if(!require("pacman")) install.packages ("pacman")

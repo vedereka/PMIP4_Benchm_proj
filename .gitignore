@@ -24,7 +24,10 @@
 /output_rds_temp/
 
 #ncpath
-/output_netcdf/
+# /output_netcdf/
+
+# output scores csv 
+/output_scores/
 
 #temporary RDS files from Mod1
 /output_rds_temp/

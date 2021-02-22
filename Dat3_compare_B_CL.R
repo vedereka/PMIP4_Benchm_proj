@@ -218,8 +218,8 @@ fig <- ggarrange(get(paste("plot_MAT",j, sep="_")),
   
 fig
 
-ggsave(fig,file=paste(plotpath, j,"_scatterplots.jpg", sep = ""),width = 11.69,height = 8.27)
-#ggsave(fig,file=paste(plotpath, j,"_scatterplots.pdf", sep = ""),width = 11.69,height = 8.27)
+ggsave(fig,file=paste(plotpath,"dat_CL_versions/CL_BP_scatter_",j,".jpg", sep = ""),width = 11.69,height = 8.27)
+#ggsave(fig,file=paste(plotpath,"dat_CL_versions/CL_BP_scatter_",j,".jpg", sep = ""),width = 11.69,height = 8.27)
 
 }
 graphics.off()
