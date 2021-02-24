@@ -30,6 +30,9 @@
 # source(paste(getwd(),"/LGM_Benchmarking/cfg.r", sep="")) and "modgrid" 
 # (modgrid = FALSE)
 # 
+# To-do: use ggplot2::ggplot_build() instead of assign(paste("plot_data",
+# mod_varname, sep = "_"), plot_data) -> more robust
+
 # Created by Laia Comas-Bru in October 2020
 # Last modified: February 2021
 # 
