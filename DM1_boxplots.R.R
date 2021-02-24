@@ -1,18 +1,32 @@
-### produce data-model latitudinal boxplots
+### produce data only and data-model latitudinal boxplots
+# Boxplot #1: Bartlein (B), Cleator at the Bartlein sites (CL) and all Cleator data (CL_all)
+# Boxplot #2: Bartlein (B), all Cleator data (CL_all) and model data
+# Statistical summaries of all variables are saved in output/
+# These are the things that will require checking if the models are updated:
+  # - model_ls: Are model names correctly trimmed?
+  # - scales_y: are limits still valid?
+  # - guide_legend nrow and ncol: do they need to be updated?
+  # - breaks and levels in scale_fill_manual (note that the order is strange)
+  # - colorSet to match the number of models (and the order)
+
 # Created by Laia Comas-Bru in October 2020
 # Last modified: February 2021
 
-#### LOAD OBSERVATIONS AND ORGANISE DATA ####  files produced in Step0 extract site data
+# Still to-do: Haven't been able to keep empty spaces for missing data in the 
+# DM boxplots. This is a known issue of ggplot2. See:
+# https://github.com/tidyverse/ggplot2/issues/3345
+
+#### LOAD OBSERVATIONS AND ORGANISE DATA ####  
+# files produced in Step0 extract site data
 data_obs <- read.csv(file.path(dataobspath, "data_obs_raw.csv"), na.strings = "NA",strip.white = TRUE, blank.lines.skip = T) %>% 
   dplyr::rename (LAT = lat, LON = lon) %>%  dplyr::select (LAT, LON, MAT, MTCO, MTWA, MAP, REF)
                      
 data_BarPre <- data_obs %>%  filter (REF == "B_wf" | REF == "PR_all") 
   
-data_Cle <- data_obs %>%  filter (REF == "CL_all_229")
+data_Cle <- data_obs %>%  filter (REF == "CL_all_244") # use most recent Cleator dataset
 
 #### SELECT OVERLAPPING SITES BETWEEN BARTLEIN GRIDS AND CLEATOR #### 
-
-## load gridcells from Bartlein's gridded data and filter Cleator to just that spread of data
+# load gridcells from Bartlein's gridded data and filter Cleator to just that spread of data
 ncfname <-  paste (dataobspath, "raw_data/mat_delta_21ka_ALL_grid_2x2.nc",sep="")
 ncin <- nc_open(ncfname)
 lat <- ncin[["dim"]][["lat"]][["vals"]]
@@ -89,9 +103,8 @@ rm(ls="n","x_temp","newx","grid")
 grid_Cle$REF <- "CL"
 grid_BartPren$REF <- "BP"
 
-#### end of data manipulation #### 
-
-#### BOXPLOTS WITH LATITUDINAL BANDS ####
+# end of data manipulation # 
+#### BOXPLOT #1: only data ####
 ## comparisons for gridded overlapping data sources
 dtBP <- grid_BartPren [, -c(3:7)]
 dtCL <- grid_Cle  [, -c(3:7)]
@@ -113,6 +126,7 @@ obs = obs[!is.na(obs$lat_band),] #remove lats outside of range
 # select chosen variables, in this case, MAP, MTCO and MTWA
 #obs <- obs [,-c(3,7:8)]
 
+#save statistical summary of each variable
 sum_obs = summary(obs %>% filter (obs$REF == "BP"))
 write.csv(sum_obs, paste(datapath, "summary_BP.csv", sep=""))
 sum_obs = summary(obs %>% filter (obs$REF == "CL_all"))
@@ -124,7 +138,6 @@ obs2 = obs
 obs <- reshape2::melt(obs, na.rm=F, id.vars = c("lat","lon","REF", "lat_band"), variable.name = "var")
 # undo with: dcast(obs, lat + lon + REF + lat_band ~ var, value.var = "value")
 obs$REF <- factor(obs$REF , levels=c("CL_all", "CL", "BP")) # reorder boxplots bottom to top
-
 
 bp <- ggplot(na.omit(obs), aes(x=lat_band, y=value, fill=REF)) + 
   geom_boxplot(aes(fill=REF),outlier.alpha = 0.5, outlier.size = 0.5, outlier.colour = "grey86",
@@ -146,18 +159,22 @@ bp <- ggplot(na.omit(obs), aes(x=lat_band, y=value, fill=REF)) +
 
 print(bp)
 
-ggsave(bp,file=paste(plotpath,"DM_boxplots/boxplot_data_CL229.jpg", sep=""),width=12,height=7)
+ggsave(bp,file=paste(plotpath,"DM_boxplots/boxplot_data_B_CL244.jpg", sep=""),width=12,height=7)
 
-#model data
+#### BOXPLOT #2: observations and model data ####
 
 mod_variable_ls <- c('tas_anom','mtco_anom','mtwa_anom','pre_anom', 'gdd5_anom')
-model_ls <-c('AWIESM1','AWIESM2','CCSM4-UofT','CESM1-2',"iLOVECLIM1-1-1-GLAC-1D","iLOVECLIM1-1-1-ICE-6G-C",
-             'INM-CM4-8',"IPSLCM5A2",'MIROC-ES2L','MPI-ESM1-2')
 
+# location of model output
+mod_dir <- ncpath
+mod_files <- list.files(mod_dir, full.names = TRUE)
+# create list of model names for output
+model_ls <- lapply(list.files(mod_dir, full.names = F), FUN = my_name_trim) %>% as.character (.)
 obs_coord = unique(obs[,1:2])
+
 for (mod_name in model_ls){
   
-  ncname <- paste(ncpath,mod_name, "_LGM_anomalies.nc",sep="") # adjust file name if updated CRU version
+  ncname <- paste(ncpath,mod_name, "_LGM_anomalies.nc",sep="") 
   ncin <- nc_open(ncname) 
   lat <- ncin[["dim"]][["lat"]][["vals"]]; nlat <- length(lat)
   lon <- ncin[["dim"]][["lon"]][["vals"]];nlon <- length(lon)
@@ -169,10 +186,8 @@ for (mod_name in model_ls){
     var[var=="NaN"]=NA
     
     # extract indices of closest gridcells
-    j <- sapply(obs_coord$lon, function(x)
-      which.min(abs(lon - x)))
-    k <- sapply(obs_coord$lat, function(x)
-      which.min(abs(lat - x)))
+    j <- sapply(obs_coord$lon, function(x) which.min(abs(lon - x)))
+    k <- sapply(obs_coord$lat, function(x) which.min(abs(lat - x)))
     
     var_vec <- as.vector(var) 
     
@@ -197,61 +212,35 @@ nc_close(ncin)
 
 pts$lat_band <- cut(pts$lat, breaks = brkpnt,labels = brk_lab)
 
+# rename vars
+pts <- data.frame(lapply(pts, function(x) {gsub("tas_anom", "MAT", x)})) 
+pts <- data.frame(lapply(pts, function(x) {gsub("mtco_anom", "MTCO", x)}))
+pts <- data.frame(lapply(pts, function(x) {gsub("mtwa_anom", "MTWA", x)}))
+pts <- data.frame(lapply(pts, function(x) {gsub("pre_anom", "MAP", x)}))
+pts <- data.frame(lapply(pts, function(x) {gsub("gdd5_anom", "GDD5", x)}))
+
 data_all = rbind(obs, pts)
 
-data_all <- data.frame(lapply(data_all, function(x) {gsub("tas_anom", "MAT", x)}))
-data_all <- data.frame(lapply(data_all, function(x) {gsub("mtco_anom", "MTCO", x)}))
-data_all <- data.frame(lapply(data_all, function(x) {gsub("mtwa_anom", "MTWA", x)}))
-data_all <- data.frame(lapply(data_all, function(x) {gsub("pre_anom", "MAP", x)}))
-data_all <- data.frame(lapply(data_all, function(x) {gsub("gdd5_anom", "GDD5", x)}))
-
-#remove data_all => CL_all
+#remove => CL (=Cleator at Bartlein sites)
 data_all <- data_all %>% filter(REF != "CL")
-data_all <- data_all %>% filter(var != "MI")
-
 data_all$lat <- as.numeric(data_all$lat)
 data_all$lon <- as.numeric(data_all$lon)
 data_all$value <- as.numeric(data_all$value)
 data_all$var <- as.factor(data_all$var)
 data_all$REF <- factor(data_all$REF , 
-                       levels=c("MPI-ESM1-2", "MIROC-ES2L", "IPSLCM5A2", "INM-CM4-8",
-                                "iLOVECLIM1-1-1-ICE-6G-C", "iLOVECLIM1-1-1-GLAC-1D",
-                                "CESM1-2", "CCSM4-UofT", "AWIESM2", "AWIESM1", "CL_all", "BP"))
+                       levels= c(rev(as.character(model_ls)), "CL_all", "BP"))
 data_all$lat_band <- factor(data_all$lat_band, levels = brk_lab[2:8])
-
 
 saveRDS(data_all, file = paste(datapath,"obs_mod.RDS", sep=""))
 
-#colorSet = c('grey75', 'grey40', brewer.pal(10,"Paired"))
-colorSet= c("#A6CEE3","#1F78B4","grey75","grey40","#B2DF8A","#33A02C","#FB9A99","#E31A1C",
-            "#FDBF6F","#FF7F00","#CAB2D6","#6A3D9A")
-
-
-bp <- ggplot(na.omit(data_all), aes(x=lat_band, y=value, fill=REF)) + 
-  geom_boxplot(aes(fill=REF),outlier.shape = NA, 
-               #outlier.alpha = 0.5, outlier.size = 0.5, outlier.colour = "grey86",
-               width = 0.8, varwidth=F, lwd=0.01,position = position_dodge2(preserve = "single")) +
-  theme_bw()+
-  theme(axis.title.x=element_blank(),
-        axis.title.y=element_blank(),
-        axis.text.x = element_text(angle = 0, vjust = 0, hjust=0.9,face="bold"),
-        axis.text.y = element_text(angle = 0, vjust = -0.1, hjust=0.5,face="bold"),
-        legend.position="right",
-        legend.box = "horizontal", legend.text.align=0)+
-  scale_fill_manual(name = element_blank(),
-                    breaks = c("AWIESM2", "AWIESM1", "CL_all", "BP", "iLOVECLIM1-1-1-ICE-6G-C", 
-                               "iLOVECLIM1-1-1-GLAC-1D", "CESM1-2", "CCSM4-UofT", "MPI-ESM1-2", "MIROC-ES2L", "IPSLCM5A2", "INM-CM4-8"),
-                    labels = c("AWIESM2", "AWIESM1", "CL_all", "BP", "iLOVECLIM-ICE", 
-                               "iLOVECLIM-GLAC", "CESM1-2", "CCSM4-UofT", "MPI-ESM1-2", "MIROC-ES2L", "IPSLCM5A2", "INM-CM4-8"),
-                    values = colorSet) +
-  facet_grid(.~ var,scales='free') +
-  #facet_grid_sc(rows=vars(var), scales = list(y = scales_y)) +
-  coord_flip()
-
-print(bp)
+require (randomcoloR) # ColorBrewer max length is 12, we need 13 + 2 grey
+# color palette in the right order
+n <- length(unique(data_all$REF)) %>%  distinctColorPalette(.)
+colorSet <- rev(c(n[1:2],'grey75', 'grey40',n[3:length(n)]))
+# pie(rep(1, length(colorSet), col=colorSet)) # to see colours in a pie chart (diff each time)
 
 require(facetscales) # install with devtools::install_github("zeehio/facetscales")
-
+#set limits for each variable (only possible with facetscales)
 scales_y <- list(
     GDD5 = scale_y_continuous(breaks=scales::extended_breaks(n=3),limits=c(1500,-4000)),
     MAP = scale_y_continuous(breaks=scales::extended_breaks(n=5),limits=c(1500,-1500)),
@@ -263,7 +252,6 @@ scales_y <- list(
 scales_x <- list(
   name = scale_x_discrete()
 )
-
 
 bp <-ggplot(na.omit(data_all), aes(x=lat_band, y=value, fill=var)) + 
   geom_hline(yintercept = 0, linetype="solid", color = "black", size=0.5) +
@@ -277,7 +265,7 @@ bp <-ggplot(na.omit(data_all), aes(x=lat_band, y=value, fill=var)) +
         legend.position="left") +
   guides(fill = guide_legend(reverse = TRUE,
                              direction = "vertical", 
-                             nrow = 4,
+                             nrow = 5,
                              ncol = 3,
                              label.position = "bottom", 
                              legend.box.just = "right",
@@ -287,11 +275,13 @@ bp <-ggplot(na.omit(data_all), aes(x=lat_band, y=value, fill=var)) +
   
   scale_x_discrete(position = "top") +
   scale_fill_manual(name = element_blank(),
-                    breaks = c("AWIESM2", "AWIESM1", "CL_all", "BP", "iLOVECLIM1-1-1-ICE-6G-C", 
-                               "iLOVECLIM1-1-1-GLAC-1D", "CESM1-2", "CCSM4-UofT", "MPI-ESM1-2", "MIROC-ES2L", "IPSLCM5A2", "INM-CM4-8"),
-                    labels = c("AWIESM2", "AWIESM1", "CL_all", "BP", "iLOVECLIM-ICE", 
-                                    "iLOVECLIM-GLAC", "CESM1-2", "CCSM4-UofT", "MPI-ESM1-2", "MIROC-ES2L", "IPSLCM5A2", "INM-CM4-8"),
-                    values = colorSet) +
+                    breaks = c(model_ls[3], model_ls[2], model_ls[1],"CL_all", "BP",
+                               model_ls[8],model_ls[7],model_ls[6],model_ls[5],model_ls[4],
+                               model_ls[13],model_ls[12],model_ls[11],model_ls[10],model_ls[9]),
+                    labels = c(model_ls[3], model_ls[2], model_ls[1],"CL_all", "BP",
+                               model_ls[8],model_ls[7],model_ls[6],model_ls[5],model_ls[4],
+                               model_ls[13],model_ls[12],model_ls[11],model_ls[10],model_ls[9]),
+                    values = colorSet) + #strange order
   facet_grid_sc(rows=vars(var), scales = list(y = scales_y))+
   theme(strip.text.y = element_text(
     size = 14, color = "black", face = "bold"
@@ -303,13 +293,12 @@ ggsave(bp,file=paste(plotpath,"DM_boxplots/boxplot_data_model.jpg", sep=""),widt
 #ggsave(bp,file=paste(plotpath,"DM_boxplots/boxplot_data_model.pdf", sep=""),width=11,height=14)
 
 
-br = c("AWIESM2", "AWIESM1", "CL_all", "BP", "iLOVECLIM1-1-1-ICE-6G-C", 
-       "iLOVECLIM1-1-1-GLAC-1D", "CESM1-2", "CCSM4-UofT", "MPI-ESM1-2", "MIROC-ES2L", "IPSLCM5A2", "INM-CM4-8")
+# extract statistical summary of all varibales used in the boxplot
+br <- c("CL_all", "BP", as.character(model_ls))
 for (i in br){
 x1 <- data_all %>% filter (data_all$REF == i)
 sum_obs = summary(dcast(x1, lat + lon + lat_band ~ var, value.var = "value"))
 write.csv(sum_obs, paste(datapath, "summary_mod_boxplot_",i,".csv", sep=""))
 }
 
-
-
+graphics.off()

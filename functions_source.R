@@ -1,13 +1,15 @@
 # Script with all the functions needed in the PMIP4 benchmarking project. 
-# call with:
-# source('D:/Dropbox/R_learning/functions_source.R')
+# It must be called by init.R
 # Created by Laia Comas-Bru in October 2020
 # last modified: February 2021
 # This script includes interpolate_spline_conserve_mean.R by Author: Kamolphat Atsawawaranunt
 
-options("rgdal_show_exportToProj4_warnings"="none") #-> to mute the text output'
-library(rgdal)
-
+#### function to supressing automatic output from cat(). Use it as: y <- quiet(FUNCTION) ####
+quiet <- function(x) { 
+  sink(tempfile()) 
+  on.exit(sink()) 
+  invisible(force(x)) 
+} 
 #### function for converting gregorian days to julian calendar  #### 
 ### FROM: https://rdrr.io/rforge/ncdf.tools/src/R/convertDateNcdf2R.R ###
 
@@ -70,6 +72,26 @@ convertDateNcdf2R  =  function(
   return(time.out)
 }
 
+#### Read in shape file for plotting #### 
+options("rgdal_show_exportToProj4_warnings"="none") #-> to mute the text output'
+library(rgdal)
+
+quiet(shapefile <- readOGR(dsn=paste(getwd(), "/input_coast_shapefile/ne_110m_land/ne_110m_land.shp", sep=""), layer = 'ne_110m_land')) #laptop
+shapefile_df_360 <- fortify(shapefile)
+
+# #arrange longitudes to be from 0 to 360 instead of -180 to 180
+index <- shapefile_df_360$long <0
+shapefile_df_360$long[index] <- (shapefile_df_360$long[index] +360)
+rm(index)
+rm(shapefile)
+
+quiet(shapefile <- readOGR(dsn=paste(getwd(), "/input_coast_shapefile/ne_110m_land_360/ne_110m_land.shp", sep=""), layer = 'ne_110m_land')) #laptop
+shapefile_df_180 <- fortify(shapefile)
+
+rm(shapefile)
+
+mapWorld_grey <- geom_polygon(data= shapefile_df_180, aes(x = long, y = lat, group = group), fill = 'grey87', colour = 'grey22', size = 0.05, alpha=0.7)
+
 #### function for plotting maps #### 
 
 plot_mtco_eg_disc <- function(mat_withlatlon, cols, brkpnt, title_name, varunits, shapefile_df){
@@ -87,8 +109,8 @@ plot_mtco_eg_disc <- function(mat_withlatlon, cols, brkpnt, title_name, varunits
     geom_tile(data = dt, aes(x=lon, y=lat, colour = breaks, fill = breaks)) +
     coord_fixed(xlim = c(-180, 180), ylim = c(-90,90), expand = F) +
     theme_bw() +
-    xlab('Longitude [?]') +
-    ylab('Latitude [?]') +
+    xlab('Longitude [deg]') +
+    ylab('Latitude [deg]') +
     # scale_fill_manual(name = varunits,
     #                   breaks = brk_lab[brk_lab %in% sort(unique(dt$breaks))],
     #                   values = cols[brk_lab %in% sort(unique(dt$breaks))]) +
@@ -104,30 +126,6 @@ plot_mtco_eg_disc <- function(mat_withlatlon, cols, brkpnt, title_name, varunits
   return(mp)
 }
 
-
-#### function to supressing automatic output from cat(). Use it as: y <- quiet(FUNCTION) ####
-quiet <- function(x) { 
-  sink(tempfile()) 
-  on.exit(sink()) 
-  invisible(force(x)) 
-} 
-
-#### Read in shape file for plotting #### 
-quiet(shapefile <- readOGR(dsn=paste(getwd(), "/input_coast_shapefile/ne_110m_land/ne_110m_land.shp", sep=""), layer = 'ne_110m_land')) #laptop
-shapefile_df_360 <- fortify(shapefile)
-
-# #arrange longitudes to be from 0 to 360 instead of -180 to 180
-index <- shapefile_df_360$long <0
-shapefile_df_360$long[index] <- (shapefile_df_360$long[index] +360)
-rm(index)
-rm(shapefile)
-
-quiet(shapefile <- readOGR(dsn=paste(getwd(), "/input_coast_shapefile/ne_110m_land_360/ne_110m_land.shp", sep=""), layer = 'ne_110m_land')) #laptop
-shapefile_df_180 <- fortify(shapefile)
-
-rm(shapefile)
-
-mapWorld_grey <- geom_polygon(data= shapefile_df_180, aes(x = long, y = lat, group = group), fill = 'grey87', colour = 'grey22', size = 0.05, alpha=0.7)
 
 #### Spline interpolation with conservation of mean ####
 
@@ -213,7 +211,7 @@ FindGridCoords <- function (myLat, myLon, data){
   return (outCoords)
 }
 
-#### function opposite to "%in%" to be used in filters ####
+#### function opposite to "%in%" to be used in fi lters ####
 `%notin%` <- Negate(`%in%`)
 
 
@@ -223,7 +221,6 @@ FindGridCoords <- function (myLat, myLon, data){
 # - grid data file with cells lat/lon ranges as columns
 # output:
 # - cbind of input grid with count(n) column and averaged observations
-
 obs_data_to_grid <- function(grid, data) { 
   
   for (n in 1:dim(grid)[1]) {
@@ -246,7 +243,7 @@ obs_data_to_grid <- function(grid, data) {
   
 } 
 
-#define function to find the closest lat/lon values
+##### define function to find the closest lat/lon values #####
 FindGridCoords <- function (myLat, myLon, data){
   # data has at least two columns $lat and $lon
   outCoords <- data[which(data$lat==myLat)[which(data$lat==myLat) %in% which(data$lon==myLon)],]
@@ -254,19 +251,24 @@ FindGridCoords <- function (myLat, myLon, data){
 }
 
 
-# functions needed for the score plotting:
-  
+##### function to trim model names #####
 trim_mode_name = function (x) {
     name_trim <- substr(x, 1, nchar(x) - 5)
     return (name_trim)
-  }
+}
 
+my_name_trim = function (x) { # used in DM3
+  name_trim <- substr(x, 1, nchar(x) - 17)
+  return (name_trim)
+}
+
+##### matrixplot function for the score plotting (DM4 script)#####
 matrixplot <- function (st) {
   
   ramp = c("darkolivegreen4", "palegreen1","lemonchiffon1", "sandybrown", "white")
   
   bp <- ggplot(data = data %>% filter (data$step == st), aes(x=model, y=var, fill= factor(z_val)))  +
-    geom_tile(width=0.97, height = 0.97, color="black", show.legend = T) +
+    geom_tile(width=1, height = 0.97, color="black", show.legend = T) +
     scale_fill_manual(name = element_blank(),
                       labels = c("25% better than mean", "better than mean",
                                  "worse than mean but better than random", "worse than random", "no significant improvement"),
@@ -282,8 +284,8 @@ matrixplot <- function (st) {
     theme_bw()+
     theme(axis.title.x=element_blank(),
           axis.title.y=element_blank(),
-          axis.text.x = element_text(angle = 0, vjust = 0.40, hjust=0.5,size=13,face="bold"),
-          axis.text.y = element_text(angle = 0, vjust = 0.25, hjust=0.5,size=13,face="bold"),
+          axis.text.x = element_text(angle = 0, vjust = 0.40, hjust=0.5,size=12,face="bold"),
+          axis.text.y = element_text(angle = 0, vjust = 0.25, hjust=0.5,size=12,face="bold"),
           legend.position="top",
           legend.text = element_text(size=13),
           plot.caption = element_text(size=12, vjust = 2)) +
@@ -292,6 +294,7 @@ matrixplot <- function (st) {
   return(bp)
 }
 
+##### function to convert moisture from alpha to MI units #####
 # MI=MAP/equilibrium evapotranspiration
 # alpha = actual/equilibrium evapotranspiration
 

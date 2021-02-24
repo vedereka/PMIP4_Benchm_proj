@@ -52,8 +52,6 @@ mod_files <- list.files(mod_dir, full.names = TRUE)
 
 # create list of model names for output
 mod_files_lab <- lapply(list.files(mod_dir, full.names = F), FUN = my_name_trim)
-mod_files_lab [[5]] <- "iLOVECLIM-GLAC" # names too long otherwise (awkward in plot)
-mod_files_lab [[6]] <- "iLOVECLIM-ICE"
 
 # variable name in model nc files
 mod_variable_ls <- c('tas_anom', 'mtco_anom','mtwa_anom','pre_anom','gdd5_anom')
@@ -128,3 +126,4 @@ for (source in source_ls) {
     }
   }
 }
+graphics.off()

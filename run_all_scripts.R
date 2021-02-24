@@ -1,4 +1,3 @@
-setwd("D:/Dropbox/Benchm_LGM/PMIP4_Benchm_proj")
 
 print(paste("setup and configuration"))
 source('init.R')
@@ -9,8 +8,8 @@ source("Dat0_B_convert_splash.R")
 print(paste("Compare cleator versions"))
 source("Dat1_compare_CL_versions.R")
 
-print(paste("Latitudinal boxplots with observations"))
-source("Dat2_obs_boxplots.R")
+# no need to run this. A (better) data boxplot is produced in DM1
+# source("Dat2_obs_boxplots.R")
 
 print(paste("Compare Bartlein with Cleator 244 dataset"))
 source("Dat3_compare_B_CL.R")

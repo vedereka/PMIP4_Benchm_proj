@@ -1,0 +1,60 @@
+Updates:
+See gihub branch "new_netcdfs". I'll merge this with the master once everything works fine.
+Local files not pushed yet
+
+#----------------------------#
+
+New models: 
+CESM2-1 (pr and tas; using sftgif from CESM1-2)
+MPI-ESM1-2-LR (no climatic variables -> ignoring)
+HadCM3: Using GLAC-1D and ICE6GC. Ignoring PMIP3 version
+
+#----------------------------#
+
+New models list for scripts:
+model_ls <-c('AWIESM1','AWIESM2','CCSM4-UofT','CESM1-2','CESM2-1','HadCM3-GLAC1D','HadCM3-ICE6GC','iLOVECLIM1-1-1-GLAC-1D','iLOVECLIM1-1-1-ICE-6G-C','INM-CM4-8','IPSLCM5A2','MIROC-ES2L','MPI-ESM1-2')
+
+#----------------------------#
+Creating homogenised netcdf with all variables:
+#----------------------------#
+
+Step1 (Mod1): This scripts opens netcdf, checks everything ok and homogenises variables. All monthly variables are then saved in RDS format. Global maps of monthly LGM, PI and LGM-PI anomalies are saved in pdf format for easy visualisation
+
+'AWIESM1': Ok
+'AWIESM2': Sftgif and sftlf (ice and land masks resp) are ratios instead of percentages. Ok after accounting for this in Mod1 script.
+'CCSM4-UofT': Ok
+'CESM1-2': It previously had problems and not all of them have been fixed. Sftlf still has a third dimension (removed). Glacier mask without lat/lon values (or in a different path than the other netcdfs!), using those of the land mask. Landmask (sftlf) is ratio instead of percentage.
+'CESM2-1': Same issues as with CESM1-2. Additionally, sftgif is missing. Cannot use the one for CESM1-2 because this is 144*96 instead of 288*192. Temp solution: Script tuned to use sftgif from CCSM4-UofT instead, which has the same resolution.
+'HadCM3-GLAC1D': Ok
+'HadCM3-ICE6GC': Ok
+'iLOVECLIM1-1-1-GLAC-1D': Ok
+'iLOVECLIM1-1-1-ICE-6G-C': Ok
+'INM-CM4-8': Ok
+'IPSLCM5A2': Ok
+'MIROC-ES2L': Ok
+'MPI-ESM1-2': Ok
+
+Conclusion: All models ok after implementing the workarounds mentioned above for AWIESM2, CESM1-2 and CESM2-1
+
+#----------------------------#
+
+Step 2 (Mod2): This script calls the RDS variables created in Mod1, calculates MTWA, MTCO and GDD5 and then creates standardised netcdf. These netcdfs are the ones that are going to be used later and can be quickly checked with panoply. 
+Outstanding issue: create MI from clt. 
+All models work fine!
+
+#----------------------------#
+Scores (plots)
+
+Model names: AWIESM1, AWIESM2, CCSM4-UofT, CESM1-2, CESM2-1, HadCM3-GLAC1D, HadCM3-ICE6GC, iLOVECLIM1-1-1-GLAC-1D, iLOVECLIM1-1-1-ICE-6G-C, INM-CM4-8, IPSLCM5A2, MIROC-ES2L, MPI-ESM1-2.
+
+Shortened names for plotting: "AWI1","AWI2","CCSM4","CESM1-2","CESM2-1","Had-GLAC","Had-ICE","iLOVE-GLAC","iLOVE-ICE", "INM","IPSL","MIROC","MPI"
+
+
+
+
+
+
+
+
+
+

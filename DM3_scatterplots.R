@@ -1,5 +1,10 @@
 # Produces scatter plots of the data/model extracted to produce the benchmarking scores in DM2
-# Note: The definition of mod_lab in L84 will need to be adjusted to match the length of the path name 
+# 
+# The definition of mod_lab will need to be adjusted to match the length of the path name 
+#   - mod_lab <- substr(mod_name, A, nchar(mod_name) - B) -> A and B are numbers
+#     that will depend on the length of the working path
+# If models are updated -> make sure that the model labels manually modifed are ok
+# 
 # Use Kageyama 2020 (cp-2019-169) regions:
 # ### definition of the regions: latitude range, longitude range
 #   'Globe':[(-90,90,'cc'),(-180,180,'cc')],
@@ -19,10 +24,15 @@
 #   ExtratropicalAsia':[(30,75,'cc'),(60,135,'cc')],
 #   TropicalAsia':[(8,30,'cc'),(60,120,'cc')],
 #   TropicalAmericas':[(-30,30,'cc'),(-120,-35,'cc')],
-
+# 
+# This script requires "my_scatterplot" function defined in functions_source.R 
+# and also "extractComparison" (sourced in DM2 with:
+# source(paste(getwd(),"/LGM_Benchmarking/cfg.r", sep="")) and "modgrid" 
+# (modgrid = FALSE)
+# 
 # Created by Laia Comas-Bru in October 2020
 # Last modified: February 2021
-
+# 
 ##### SET STUFF ################################################################################
 
 #load observations 
@@ -50,8 +60,10 @@ mod_files <- list.files(mod_dir, full.names = TRUE)
 
 # create list of model names for output
 mod_files_lab <- lapply(list.files(mod_dir, full.names = F), FUN = my_name_trim)
-mod_files_lab [[5]] <- "iLOVECLIM-GLAC" # names too long otherwise (awkward in plot)
-mod_files_lab [[6]] <- "iLOVECLIM-ICE"
+mod_files_lab [[6]] <- "HadCM3-GLAC" # names too long
+mod_files_lab [[7]] <- "HadCM3-ICE"
+mod_files_lab [[8]] <- "iLOVECLIM-GLAC" # names too long
+mod_files_lab [[9]] <- "iLOVECLIM-ICE"
 
 # variable name in model nc files
 mod_variable_ls <- c('tas_anom', 'mtco_anom','mtwa_anom','pre_anom','gdd5_anom')
@@ -83,12 +95,10 @@ for (source in source_ls) {
       
       mod_lab <- substr(mod_name, 55, nchar(mod_name) - 17) # 44 will change if using a different path name
       
-      if (mod_name == mod_files[[5]]) {
-        mod_lab <- "iLOVECLIM-GLAC"
-      }
-      if (mod_name == mod_files[[6]]) {
-        mod_lab <- "iLOVECLIM-ICE"
-      }
+      if (mod_name == mod_files[[6]]) {mod_lab <- "Had-GLAC"}
+      if (mod_name == mod_files[[7]]) {mod_lab <- "Had-ICE"}
+      if (mod_name == mod_files[[8]]) {mod_lab <- "iLOVE-GLAC"}
+      if (mod_name == mod_files[[9]]) {mod_lab <- "iLOVE-ICE"}
       
       for (mod_varname in mod_variable_ls) {
         mods <- lapply(mod_name, raster, varname = mod_varname) # for 2D netCDF files
@@ -131,29 +141,18 @@ for (source in source_ls) {
       
       fig <- annotate_figure(
         fig,
-        right = text_grob(
-          paste (mod_lab),
-          x = -1,
-          y = 0.4,
-          face = "bold",
-          size = 14
-        ),
+        right = text_grob(paste (mod_lab),x = -1,y = 0.4,face = "bold",size = 14),
         bottom = text_grob(
           paste ("Obs vs Sim (prior to scores) \n Source: ", source, "\n Region: ",region, sep = ""),
-          y = 3.5,
-          x = 0.88,
-          face = "italic",
-          size = 12
-        ),
+          y = 3.5,x = 0.88,face = "italic",size = 12),
         top = text_grob(" ", color = "green", rot = 90),
       )
       
       ggsave(
         fig,
-        file = paste(plotpath,"DM_scatterplots/",source,"_",region,"_",mod_lab,"_scatterplot.jpg", sep = ""),
-        width = 11.69,
-        height = 8.27
-      )
+        file = paste(plotpath,"DM_scatterplots/",source,"_",region,"_",mod_lab,
+                     "_scatterplot.jpg", sep = ""),
+        width = 11.69,height = 8.27)
     }
   }
 }
