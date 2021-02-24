@@ -7,6 +7,8 @@ graphics.off()
 # set wd (revise as necessary)
  # setwd("D:/Dropbox/Benchm_LGM/PMIP4_Benchm_proj")
 
+options( scipen = 0, digits=3 )
+
 # load contributed packages
 if(!require("pacman")) install.packages ("pacman")
 pacman::p_load (zoo, ncdf4, facetscales, ggpubr, tidyverse, ggExtra, reshape2,

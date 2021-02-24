@@ -73,7 +73,8 @@ for (source in source_ls) {
         map_df( ~ read_csv(.)) %>% `colnames<-`(
           c(
             "X1","varname","mean_null","random_null","AWI1","AWI2","CCSM4",
-            "CESM","iLOVE-GLAC","iLOVE-ICE","INM","IPSL","MIROC","MPI"
+            "CESM12","CESM21","Had-GL","Had-IC","iLOVE-GL","iLOVE-IC",
+            "INM","IPSL","MIROC","MPI"
           )
         )
     )
@@ -292,6 +293,8 @@ for (region in region_ls$reg_name) {
     }
   }
   #here whe have a data file with NA in z_val for changes that are not significant
+  # matrixplot is a function in functions_source.R
+  
   fig <- ggarrange (
     matrixplot(1) + rremove("x.text"),
     matrixplot(2) + rremove("x.text"),
@@ -315,4 +318,4 @@ for (region in region_ls$reg_name) {
   
 }
 
-#graphics.off()
+graphics.off()

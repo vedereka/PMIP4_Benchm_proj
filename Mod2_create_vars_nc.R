@@ -1,15 +1,17 @@
-# Load PMIP4 model data saved as RDS (output of Mod1 script), calculate MAP, MAT, MTCO, MTWA and GDD5 mean annual anomalies,
+# Load PMIP4 model data saved as RDS (output of Mod1 script), calculate MAP, 
+# MAT, MTCO, MTWA and GDD5 mean annual anomalies,
 # save anomalies as clean, homogeneised netcdf files (one nc file per model)
 # Created by Laia Comas-Bru in June 2020
 # Last modified: February 2021
 
-# Note: "Error in R_nc4_create: Permission denied (creation mode was 4096)" appears when netcdf is not 
-# properly closed (nc_close) as when the script is stopped midway. Once it shows up, you'll need to restart R
-
+# Note: "Error in R_nc4_create: Permission denied (creation mode was 4096)"
+# appears when netcdf is not properly closed (nc_close) as when the script is 
+# manually stopped midway. Once it shows up, you'll need to restart R
 
 # load data and convert to vector to create a 2D array with all the months 
-model_ls <-c('AWIESM1','AWIESM2','CCSM4-UofT','CESM1-2','INM-CM4-8','MIROC-ES2L','MPI-ESM1-2',
-             'iLOVECLIM1-1-1-GLAC-1D','iLOVECLIM1-1-1-ICE-6G-C','IPSLCM5A2')
+model_ls <-c('AWIESM1','AWIESM2','CCSM4-UofT','CESM1-2','CESM2-1','HadCM3-GLAC1D',
+             'HadCM3-ICE6GC','iLOVECLIM1-1-1-GLAC-1D','iLOVECLIM1-1-1-ICE-6G-C',
+             'INM-CM4-8','IPSLCM5A2','MIROC-ES2L','MPI-ESM1-2')
 variab_ls <- c('tas', 'pr','clt')#, 'mtco','mtwa')
 
 
@@ -26,11 +28,9 @@ for (model in model_ls){
   
   #extract and rearrange tas, pre, clt anomalies
   for (variab in variab_ls) {
-    if(variab =="clt" &
-       model=="iLOVECLIM1-1-1-ICE-6G-C")
-      next
-    if (variab == "clt" & model == "iLOVECLIM1-1-1-GLAC-1D")
-      next
+    if(variab =="clt" & model=="iLOVECLIM1-1-1-ICE-6G-C") next
+    if(variab =="clt" & model=="iLOVECLIM1-1-1-GLAC-1D") next
+    if(variab =="clt" & model=="CESM2-1") next
     else {
       for (mon in 1:12) {
         data.series <-
@@ -226,12 +226,14 @@ for (model in model_ls){
   # create netCDF file and put arrays (no clt in iLOVEs)
   if(variab =="clt" & model=="iLOVECLIM1-1-1-ICE-6G-C"){
     ncout <- nc_create(ncfname,list(tas_def, pre_def, mtco_def, mtwa_def, gdd5_def),force_v4=FALSE)
-  } else if(variab =="clt" & model=="iLOVECLIM1-1-1-GLAC-1D") {
+    } else if(variab =="clt" & model=="iLOVECLIM1-1-1-GLAC-1D") {
     ncout <- nc_create(ncfname,list(tas_def, pre_def, mtco_def, mtwa_def, gdd5_def),force_v4=FALSE)
-  } else { # all models with clt data
-    clt_def <- ncvar_def("clt_anom","anomalies from PI",list(londim,latdim),fillvalue,"clt",prec="single")
-    ncout <- nc_create(ncfname,list(tas_def, pre_def, clt_def, mtco_def, mtwa_def, gdd5_def),force_v4=FALSE)
-    ncvar_put(ncout,clt_def,data_array_clt)
+    } else if(variab =="clt" & model=="CESM2-1") {
+    ncout <- nc_create(ncfname,list(tas_def, pre_def, mtco_def, mtwa_def, gdd5_def),force_v4=FALSE)
+    } else { # all models with clt data
+      clt_def <- ncvar_def("clt_anom","anomalies from PI",list(londim,latdim),fillvalue,"clt",prec="single")
+      ncout <- nc_create(ncfname,list(tas_def, pre_def, clt_def, mtco_def, mtwa_def, gdd5_def),force_v4=FALSE)
+      ncvar_put(ncout,clt_def,data_array_clt)
   }
   
   # put variables #clt is already there for models were it exists
@@ -259,3 +261,4 @@ for (model in model_ls){
   nc_close(ncout)# close the file, writing data to disk
 }
 
+graphics.off()

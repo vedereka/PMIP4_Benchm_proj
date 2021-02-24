@@ -3,7 +3,9 @@
 # Created by Laia Comas-Bru in June 2020
 # Last modified: February 2021
 
-options( scipen = 0, digits=3 )
+# To-do list:
+# - Merge plots so that 1 file has the 12 months in pages (instead of 1 month =
+# 1 file). Plots are produced in a loop so this isn't straightforward'
 
 # create txt file to save logs
 st = format(Sys.time(), "%Y%m%d_%H%M%S")
@@ -13,8 +15,9 @@ paste("Model metadata. Created on ", Sys.Date(), sep = '')
 
 
 #list models, variables and time-slices (months)
-model_ls <-c('AWIESM1','AWIESM2','CCSM4-UofT','CESM1-2','INM-CM4-8','MIROC-ES2L','MPI-ESM1-2',
-             'iLOVECLIM1-1-1-GLAC-1D','iLOVECLIM1-1-1-ICE-6G-C','IPSLCM5A2')
+model_ls <-c('AWIESM1','AWIESM2','CCSM4-UofT','CESM1-2','CESM2-1','HadCM3-GLAC1D',
+             'HadCM3-ICE6GC','iLOVECLIM1-1-1-GLAC-1D','iLOVECLIM1-1-1-ICE-6G-C',
+             'INM-CM4-8','IPSLCM5A2','MIROC-ES2L','MPI-ESM1-2')
 var_ls <- c('tas', 'pr', 'clt')
 mon_ls <- seq(1,12,1)
 period_sel <- c("LGM", "PI")
@@ -27,22 +30,45 @@ period_sel <- c("LGM", "PI")
     for (variab in var_ls) {
       print(paste("Variable:", variab, sep = ' '))
       
-      # #iLOVECLIM has no clt data -> ignore
+      # #iLOVECLIM and CESM2-1 have no clt data -> ignore
       if(variab =="clt" & model=="iLOVECLIM1-1-1-ICE-6G-C") next
       if(variab =="clt" & model=="iLOVECLIM1-1-1-GLAC-1D") next
+      if(variab =="clt" & model=="CESM2-1") next
       
       # obtain that variable for both time periods with land/ice mask applied (m_LGM and m_PI)
       for (per in period_sel) {
         
-      if (per == 'LGM') {
-        ncfname <-paste(pmip_ncpath,model,'/',model,'_LGM_moclim_',variab,'.nc',sep = '')
-        ncfname_sftgif <- paste(pmip_ncpath, model, '/', model, '_LGM_sftgif.nc', sep = '')
-        ncfname_sftlf <-paste(pmip_ncpath, model, '/', model, '_LGM_sftlf.nc', sep = '')
-      } else {
-        ncfname <-paste(pmip_ncpath,model,'/',model,'_PI_moclim_',variab,'.nc',sep = '')
-        ncfname_sftgif <-paste(pmip_ncpath, model, '/', model, '_PI_sftgif.nc', sep = '')
-        ncfname_sftlf <-paste(pmip_ncpath, model, '/', model, '_PI_sftlf.nc', sep = '')
-      }
+        if (per == 'LGM') {
+          ncfname <-
+            paste(pmip_ncpath,model,'/',model,'_LGM_moclim_',variab,'.nc',sep = '')
+          ncfname_sftlf <-
+            paste(pmip_ncpath, model, '/', model, '_LGM_sftlf.nc', sep = '')
+          
+          if (model == "CESM2-1") {
+            ncfname_sftgif <-
+              paste(pmip_ncpath, 'CCSM4-UofT/CCSM4-UofT_LGM_sftgif.nc', sep = '')
+          }
+          else {
+            ncfname_sftgif <-
+              paste(pmip_ncpath, model, '/', model, '_LGM_sftgif.nc', sep = '')
+          }
+          
+        } else {
+          ncfname <-
+            paste(pmip_ncpath,model,'/',model,'_PI_moclim_',variab,'.nc',sep = '')
+          ncfname_sftlf <-
+            paste(pmip_ncpath, model, '/', model, '_PI_sftlf.nc', sep = '')
+         
+           if (model == "CESM2-1") {
+            ncfname_sftgif <-
+              paste(pmip_ncpath, 'CCSM4-UofT/CCSM4-UofT_PI_sftgif.nc', sep = '')
+          }
+          else {
+            ncfname_sftgif <-
+              paste(pmip_ncpath, model, '/', model, '_PI_sftgif.nc', sep = '')
+          }
+        }
+        
       # open NetCDF files
       ncin <- nc_open(ncfname)
       ncin_sftgif <- nc_open(ncfname_sftgif)
@@ -59,13 +85,13 @@ period_sel <- c("LGM", "PI")
       
       sftlf <- ncvar_get(ncin_sftlf, "sftlf") 
 
-      
-      if (model == "CESM1-2"){ # this variable has 3 dimensions! ???
+      if (length(dim(sftlf)) == 3){ # CESM models have a third dimension (???)
         sftlf <- sftlf [,,1]
       }
-        
+
       sftgif <- ncvar_get(ncin_sftgif, "sftgif")
       
+      # Some model outputs are ratios instead of percentage
       if (max(sftgif,na.rm=T)==100){
         sftgif[sftgif > 80] <- NA
         sftgif[sftgif <= 80] <- 1 ## keep if no ice
@@ -73,7 +99,7 @@ period_sel <- c("LGM", "PI")
         sftgif[sftgif > 0.8] <- NA
         sftgif[sftgif <= 0.8] <- 1 # keep if less than 80% ice
         }
-      
+
       if (max(sftlf,na.rm=T)==100){
         sftlf[sftlf < 60] <- NA
         sftlf[sftlf >= 60] <- 1 # keep more than 60% land
@@ -81,34 +107,39 @@ period_sel <- c("LGM", "PI")
         sftlf[sftlf < 0.6] <- NA
         sftlf[sftlf >= 0.6] <- 1 # keep more than 60% land
       }
-      
+
       
       # adjust longitudes so that they're -180 to 180 and ensure they're right
       lon_names <-as.numeric(ncin_sftlf[["dim"]][["lon"]][["vals"]])
-      index <- lon_names > 180; lon_names[index] <- lon_names[index] - 360
+      # lons should all be from -180 to 180. They need revision if 0-360.
+      if (max(lon_names) > 181) {
+        index <- lon_names > 180; lon_names[index] <- lon_names[index] - 360  
+      }
       rownames(sftlf) <- lon_names
       sftlf <- sftlf[order(as.numeric(row.names(sftlf))),]
-      
       colnames(sftlf) <- ncin_sftlf[["dim"]][["lat"]][["vals"]]
 
+      
       #glacier mask without lat/lon values in CESM, using those of the land mask
-      if (model == "CESM1-2") {
+      if (is.null(ncin_sftgif[["dim"]][["lon"]][["vals"]])) {
         lon_names <- as.numeric(ncin_sftlf[["dim"]][["lon"]][["vals"]])
       } else {
         lon_names <- as.numeric(ncin_sftgif[["dim"]][["lon"]][["vals"]])
       }
       
-      index <- lon_names > 180; lon_names[index] <- lon_names[index] - 360
+      # lons should all be from -180 to 180. They need revision if 0-360.
+      if (max(lon_names) > 181) {
+        index <- lon_names > 180; lon_names[index] <- lon_names[index] - 360  
+      }
       rownames(sftgif) <- lon_names
       sftgif <- sftgif[order(as.numeric(row.names(sftgif))),]
       
       #glacier mask without lat/lon values in CESM, using those of the land mask
-      if (model == "CESM1-2") {
-        colnames(sftgif) <- ncin_sftlf[["dim"]][["lat"]][["vals"]]
-      } else {
+      if (!is.null(ncin_sftgif[["dim"]][["lat"]][["vals"]])){
         colnames(sftgif) <- ncin_sftgif[["dim"]][["lat"]][["vals"]]
+      } else {
+        colnames(sftgif) <- ncin_sftlf [["dim"]][["lat"]][["vals"]]
       }
-      
       
       land_mask <-
         sftgif * sftlf # use this to multiply it by the variable and remove ocean gridcells
@@ -197,7 +228,7 @@ period_sel <- c("LGM", "PI")
         cairo_pdf(
           paste(plotpath, 'mod_anom_maps/LGM_PI_Anom_', model, '_', variab, '_', mon, '.pdf', sep = ""),width = 11.69,
           height = 8.27, onefile = T)
-        
+
         var_title <-paste("LGM_PI_anom. Model: ",model,". Variable: ",variab,". Month: ",mon,".",sep = "")
         
         #colbreaks
@@ -223,9 +254,9 @@ period_sel <- c("LGM", "PI")
         cairo_pdf(
           paste(plotpath, 'mod_LGM_maps/LGM_data_', model, '_', variab, '_', mon, '.pdf', sep = ""),width = 11.69,
         height = 8.27, onefile = T)
-        
+
         var_title <-paste("LGM_data. Model: ",model,". Variable: ",variab,". Month: ",mon,".",sep = "")
-        
+
         #colbreaks
         if (variab == 'pre') {
           colbreaks <- c(seq(from = max(m_mon_LGM_df, na.rm = TRUE),to = min(m_mon_LGM_df, na.rm = TRUE),length.out = 11))
@@ -233,7 +264,7 @@ period_sel <- c("LGM", "PI")
           colbreaks <- c(seq(from = min(m_mon_LGM_df, na.rm = TRUE),to = max(m_mon_LGM_df, na.rm = TRUE),length.out = 11
           ))
         }
-        
+
         p <- plot_mtco_eg_disc(
           mat_withlatlon = m_mon_LGM_df,
           cols = cols,
@@ -244,14 +275,14 @@ period_sel <- c("LGM", "PI")
         )
         print(p)
         dev.off()
-        
+
         # MAP 3: PI
         cairo_pdf(
           paste(plotpath, 'mod_PI_maps/PI_data_', model, '_', variab, '_', mon, '.pdf', sep = ""),width = 11.69,
           height = 8.27, onefile = T)
-        
+
         var_title <-paste("PI_data. Model: ",model,". Variable: ",variab,". Month: ",mon,".",sep = "")
-        
+
         #colbreaks
         if (variab == 'pre') {
           colbreaks <- c(seq(from = max(m_mon_PI_df, na.rm = TRUE),to = min(m_mon_PI_df, na.rm = TRUE),length.out = 11))
@@ -259,7 +290,7 @@ period_sel <- c("LGM", "PI")
           colbreaks <- c(seq(from = min(m_mon_PI_df, na.rm = TRUE),to = max(m_mon_PI_df, na.rm = TRUE),length.out = 11
           ))
         }
-        
+
         p <- plot_mtco_eg_disc(
           mat_withlatlon = m_mon_PI_df,
           cols = cols,
@@ -270,25 +301,31 @@ period_sel <- c("LGM", "PI")
         )
         print(p)
         dev.off()
-        
+
         # save anomaly files that month/model/variable
         saveRDS(m_mon_anom, file = paste(rdspath,model,"_",variab,"_anom_",mon,".RDS", sep=""))
         saveRDS(m_mon_PI_df, file = paste(rdspath,model,"_",variab,"_PI_",mon,".RDS", sep=""))
         saveRDS(m_mon_LGM_df, file = paste(rdspath,model,"_",variab,"_LGM_",mon,".RDS", sep=""))
-        
+
         # save lat/lon values for that model (just once per model)
-        
+
         if (variab =="tas" & (mon==1)) {
         lon <- as.numeric(row.names(m_mon_anom))
         lat <- as.numeric(colnames(m_mon_anom))
         saveRDS(lat, file = paste(rdspath,model,"_lat.RDS", sep=""))
         saveRDS(lon, file = paste(rdspath,model,"_lon.RDS", sep=""))
         }
-        
       }
     }
   }
-
-
 graphics.off()
 sink()
+
+# Short lines to plot the map arrays for checking purposes:
+# x_trial <- m_mon_anom #land_mask
+# cutpts <-  c(seq(from = min(x_trial, na.rm=TRUE), to = max(x_trial, na.rm=TRUE),length.out =10))
+# lat <- ncin_LGM[["dim"]][["lat"]][["vals"]]
+# lon <- ncin_LGM[["dim"]][["lon"]][["vals"]]
+# grid <- expand.grid(lon=lon, lat=lat)
+# levelplot(x_trial ~ lon * lat, data=grid, at=cutpts, cuts=11, pretty=T, col.regions=(rev(brewer.pal(10,"RdBu"))), main="testing array")
+
