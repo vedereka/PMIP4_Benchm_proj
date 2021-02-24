@@ -1,4 +1,11 @@
-setwd("D:/Dropbox/Benchm_LGM/PMIP4_Benchm_proj")
+setwd("G:/GDT/OneDrive - University of Reading/Paleoclimate/R_code/Code/PMIP4_Benchm_proj")
+
+# create txt file to save logs
+st = format(Sys.time(), "%Y%m%d_%H%M%S")
+filename <- paste("output/All_logs_", st, ".txt", sep = "")
+sink(filename, split = FALSE, append = TRUE) # divert all text outputs to a file
+paste("Created on ", Sys.Date(), sep = '')
+
 
 print(paste("setup and configuration"))
 source('init.R')
@@ -32,7 +39,7 @@ print(paste("Done. See output at: "))
 
 
 print(paste("data-model latitudinal boxplots"))
-source("DM1_boxplots.R.R")
+source("DM1_boxplots.R")
 print(paste("Done. See output at: "))
 
 
@@ -50,7 +57,7 @@ print(paste("create traffic light plot with scores"))
 source("DM4_plot_scores.R")
 print(paste("Done. See output at: "))
 
-
+sink()
 
 
 

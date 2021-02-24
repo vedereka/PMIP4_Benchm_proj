@@ -103,6 +103,7 @@ for (var in var_ls) {
   x3 <- as.data.frame(x3)
   
   x3[,1:5] <- pts_ltm [,1:5]
+
   colnames(x3)[1:5] <- colnames (pts_ltm)[1:5]
   
   quiet(
@@ -174,3 +175,4 @@ for (i in 1:length(id_ls)){
 
 write.csv(site_data, paste (dataobspath,"bartlein_converted_",Sys.Date(),".csv",sep=""), row.names = F)
 #write.csv(site_data, paste (dataobspath,"bartlein_converted.csv",sep=""), row.names = F)
+

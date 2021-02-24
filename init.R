@@ -1,12 +1,19 @@
 # This file is to setup the LGM benchmarking scripts in the repository
 # created by Laia Comas-Bru in Feb 2021
 
+
+
 rm = (list = ls())
 graphics.off()
 
 # set wd (revise as necessary)
  setwd("G:/GDT/OneDrive - University of Reading/Paleoclimate/R_code/Code/PMIP4_Benchm_proj")
 
+ # Trying to save log output messages
+#initR_log <- file("out_init.txt") # File name of output log
+#sink(initR_log, append = TRUE, type = "output") # Writing console output to log file
+#sink(initR_log, append = TRUE, type = "message")
+ 
 # load contributed packages
 if(!require("pacman")) install.packages ("pacman")
 pacman::p_load (zoo, ncdf4, facetscales, ggpubr, tidyverse, ggExtra, reshape2,
@@ -34,6 +41,7 @@ plotpath <- paste(getwd(), "/output_plots/", sep="")
 outputpath <- paste(getwd(), "/splash_data_input/", sep="") 
 datapath <- paste(getwd(), "/output/", sep="") 
 
+
 # map background 
 mp <- ggplot() +
   coord_fixed(xlim = c(-180, 180),
@@ -47,6 +55,8 @@ mp <- ggplot() +
   theme(axis.title.y = element_text(size = rel(0.8))) +
   theme(axis.text.y = element_text(size = rel(0.8))) +
   mapWorld_grey
+
+#closeAllConnections() # Close connection to log file
 
 # # clear packages
 # pacman::p_unload(all)
@@ -69,3 +79,4 @@ mp <- ggplot() +
 # rm(list="ncname", "ncfname")
 # rm(list=setdiff(ls(), c("model", "model_ls", "variab_ls"))) # remove all variables except
 # source ("init.R")
+

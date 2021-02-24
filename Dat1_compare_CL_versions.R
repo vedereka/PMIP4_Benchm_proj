@@ -180,7 +180,7 @@ for (variab_name in variab_name_ls){
     dplyr::rename (lon = Var1, lat=Var2)
   
   
-  if (variab_name ==variab_name_ls[1]) {
+  if (variab_name == variab_name_ls[1]) {
     B_nc <- x 
   } else {
     B_nc <- cbind(B_nc, x[,3])
@@ -569,3 +569,4 @@ rm(list=ls(pattern="^plot_")) # remove all variables starting with "plot_"
 
 
 graphics.off()
+

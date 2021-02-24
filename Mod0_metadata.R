@@ -7,7 +7,7 @@
 # create txt file to save logs
 st = format(Sys.time(), "%Y%m%d_%H%M%S")
 filename <- paste("output/Models_netcdf_metadata_", st, ".txt", sep = "")
-sink(filename, split = TRUE, append = TRUE) # divert all text outputs to a file
+sink(filename, split = FALSE, append = TRUE) # divert all text outputs to a file
 paste("Created on ", Sys.Date(), sep = '')
 
 

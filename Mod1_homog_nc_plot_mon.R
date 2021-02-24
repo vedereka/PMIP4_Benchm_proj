@@ -8,7 +8,7 @@ options( scipen = 0, digits=3 )
 # create txt file to save logs
 st = format(Sys.time(), "%Y%m%d_%H%M%S")
 filename <- paste("output/", st, "_models_metadata.txt", sep = "")
-sink(filename, split = TRUE, append = TRUE) # divert all text outputs to a file
+sink(filename, split = FALSE, append = TRUE) # divert all text outputs to a file
 paste("Model metadata. Created on ", Sys.Date(), sep = '')
 
 

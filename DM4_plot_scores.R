@@ -62,21 +62,29 @@ steps = c(1, 2, 3)
 
 for (source in source_ls) {
   for (region in region_ls$reg_name) {
+    pattern = paste ("*", source, "_", region, ".csv", sep = "")
+    fileList <- list.files(
+      "output_scores/",
+      pattern = paste ("*", source, "_", region, ".csv", sep = ""),
+      full.names = TRUE
+    )
     
-    quiet(
+    readFiles <- fileList %>% map_df( ~ read.csv(.))
+    
+   quiet(
       df_tbl <- #load all csv files in directory and rbind them
         list.files(
           "output_scores/",
           pattern = paste ("*", source, "_", region, ".csv", sep = ""),
           full.names = TRUE
         ) %>%
-        map_df( ~ read_csv(.)) %>% `colnames<-`(
+        map_df( ~ read.csv(.)) %>% `colnames<-`(
           c(
             "X1","varname","mean_null","random_null","AWI1","AWI2","CCSM4",
             "CESM","iLOVE-GLAC","iLOVE-ICE","INM","IPSL","MIROC","MPI"
           )
         )
-    )
+   )
     
     # chose step and prepare data
     
@@ -314,5 +322,6 @@ for (region in region_ls$reg_name) {
          height = 13)
   
 }
+
 
 #graphics.off()
