@@ -16,9 +16,9 @@ pacman::p_load (zoo, ncdf4, facetscales, ggpubr, tidyverse, ggExtra, reshape2,
                 sjmisc, raster, lattice, pracma)
 
 
-if(!require("rgdal")) install.packages ("rgdal")
-options("rgdal_show_exportToProj4_warnings"="none")
-library(rgdal)
+# if(!require("rgdal")) install.packages ("rgdal")
+# options("rgdal_show_exportToProj4_warnings"="none")
+# library(rgdal)
 
 # load functions 
 source('functions_source.R')#load functions and coast shapefile
