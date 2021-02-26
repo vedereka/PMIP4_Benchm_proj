@@ -8,7 +8,8 @@
   # - guide_legend nrow and ncol: do they need to be updated?
   # - breaks and levels in scale_fill_manual (note that the order is strange)
   # - colorSet to match the number of models (and the order)
-
+# It requires facetscales package from devtools::install_github("zeehio/facetscales")
+# 
 # Created by Laia Comas-Bru in October 2020
 # Last modified: February 2021
 

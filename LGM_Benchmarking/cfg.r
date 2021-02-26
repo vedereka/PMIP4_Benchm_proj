@@ -20,7 +20,7 @@ sourceAllLibs(paste(getwd(),"/LGM_Benchmarking/src/processModelOutputs/", sep=""
 sourceAllLibs(paste(getwd(),"/packages_downloaded/rasterextrafuns/rasterPlotFunctions/R/", sep=""))
 
 
-# Source functions needed to create the scores in XXXx.R file
+# Source functions needed to create the scores in DM2_run_comparison_scores.R file
 #function to get scores
 makeComparison <- function(mod) {
   ## finds location of obs in model cells
@@ -104,10 +104,4 @@ my_scatterplot <- function (dataplot){
   p <- ggMarginal(p, type = "histogram", fill="grey90", size = 8)
   
   return (p)
-}
-
-# function to trim model names
-my_name_trim <- function (mod_ls){
-  name_trim <- substr(mod_ls, 1, nchar(mod_ls)-17)
-  return (name_trim)
 }

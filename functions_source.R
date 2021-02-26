@@ -204,14 +204,7 @@ interpol_spline_cons_mean <- function(y_points, month_len, max_iter, tol){
   }
 }
 
-#### define function to find the closest lat/lon values ####
-FindGridCoords <- function (myLat, myLon, data){
-  # data has at least two columns $lat and $lon
-  outCoords <- data[which(data$lat==myLat)[which(data$lat==myLat) %in% which(data$lon==myLon)],]
-  return (outCoords)
-}
-
-#### function opposite to "%in%" to be used in fi lters ####
+#### function opposite to "%in%" to be used in filters ####
 `%notin%` <- Negate(`%in%`)
 
 
