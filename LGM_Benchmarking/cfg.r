@@ -50,7 +50,7 @@ makeComparison <- function(mod) {
   
   # The score function provides 3 measures: 
   # 1) straight NME/NMSE comparisons;
-  # 2) comparisons with the influcance of the mean removed (i.e testing pattern and variablity);
+  # 2) comparisons with the influance of the mean removed (i.e testing pattern and variablity);
   # 3) comparisons with the influance of the mean and variance removed (i.e testing the pattern only).
   
   score(NME(obsSims[1,], obsSims[2,], w =  obsSims[3,]))

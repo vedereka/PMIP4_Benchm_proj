@@ -293,7 +293,7 @@ ggsave(bp,file=paste(plotpath,"DM_boxplots/boxplot_data_model.jpg", sep=""),widt
 #ggsave(bp,file=paste(plotpath,"DM_boxplots/boxplot_data_model.pdf", sep=""),width=11,height=14)
 
 
-# extract statistical summary of all varibales used in the boxplot
+# extract statistical summary of all variables used in the boxplot
 br <- c("CL_all", "BP", as.character(model_ls))
 for (i in br){
 x1 <- data_all %>% filter (data_all$REF == i)
