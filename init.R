@@ -5,7 +5,7 @@ rm (list = ls())
 graphics.off()
 
 # set wd (revise as necessary)
- # setwd("D:/Dropbox/Benchm_LGM/PMIP4_Benchm_proj")
+setwd("G:/GDT/OneDrive - University of Reading/Paleoclimate/R_code/Code/PMIP4_Benchm_proj")
 
 options( scipen = 0, digits=3 )
 
@@ -21,7 +21,7 @@ pacman::p_load (zoo, ncdf4, facetscales, ggpubr, tidyverse, ggExtra, reshape2,
 # library(rgdal)
 
 # load functions 
-source('functions_source.R')#load functions and coast shapefile
+source('functions_source.R') #load functions and coast shapefile
 
 # setup paths
 # data paths, in main directory, now in gitignore (=not recorded in Git)

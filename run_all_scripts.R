@@ -24,7 +24,7 @@ print(paste("compute model variables for DM comparison"))
 source("Mod2_create_vars_nc.R")
 
 print(paste("data-model latitudinal boxplots"))
-source("DM1_boxplots.R.R")
+source("DM1_boxplots.R")
 
 print(paste("run DM comparison and produce benchmarking scores"))
 source("DM2_run_comparison_scores.R")
