@@ -9,6 +9,8 @@
   # - breaks and levels in scale_fill_manual (note that the order is strange)
   # - colorSet to match the number of models (and the order)
 
+# It requires facetscales package from devtools::install_github("zeehio/facetscales")
+# 
 # Created by Laia Comas-Bru in October 2020
 # Last modified: February 2021
 
@@ -291,7 +293,6 @@ bp
 
 ggsave(bp,file=paste(plotpath,"DM_boxplots/boxplot_data_model.jpg", sep=""),width=11,height=14)
 #ggsave(bp,file=paste(plotpath,"DM_boxplots/boxplot_data_model.pdf", sep=""),width=11,height=14)
-
 
 # extract statistical summary of all variables used in the boxplot
 br <- c("CL_all", "BP", as.character(model_ls))

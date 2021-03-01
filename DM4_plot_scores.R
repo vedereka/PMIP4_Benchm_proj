@@ -190,7 +190,7 @@ refs <- "CL" # min/max already used.
     
     rm(ls="x","y", "mn", "k", "rand")
     
-    # are ranges overlappin -> not significant???? if so, convert z back to NA
+    # are ranges overlapping -> not significant???? if so, convert z back to NA
     # Use DescTools::Overlap
     # steps are cumulative (1 to 2 and then 2 to 3)
     

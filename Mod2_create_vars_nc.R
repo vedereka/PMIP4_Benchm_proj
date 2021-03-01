@@ -191,7 +191,6 @@ for (model in model_ls){
   
   
   # compute GDD
-  #This is wrong. GGDD5 is monthly!!!!
   GDD5_anom <- LGM_data_vec_gdd5[,1:2]
   GDD5_anom$GDD5 <- LGM_data_vec_gdd5$GDD5 - PI_data_vec_gdd5$GDD5
   

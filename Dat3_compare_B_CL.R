@@ -79,7 +79,7 @@ grid <-B_wof [, 1:6]  %>% mutate (count_n = NA)
 
 B_CL_wof <- obs_data_to_grid (grid, data) %>% filter (count_n >= 0) %>% 
   mutate (REF = "CL_wof") %>%  rbind(., B_wof) %>% mutate (REF = as.factor (REF))
-# B_CL_wof %>%  write.csv(., file.path(dataobspath, "B_CL_wof.csv"),  na = "NA",  row.names = FALSE)
+B_CL_wof %>%  write.csv(., file.path(dataobspath, "B_CL_wof.csv"),  na = "NA",  row.names = FALSE)
 
 rm(ls="grid")
 
@@ -88,7 +88,7 @@ grid <- B_wf [, 1:6]  %>% mutate (count_n = NA)
 
 B_CL_wf <- obs_data_to_grid (grid, data) %>% filter (count_n >= 0) %>% 
   mutate (REF = "CL_wf") %>%  rbind(., B_wf) %>% mutate (REF = as.factor (REF))
-# B_CL_wf %>%  write.csv(., file.path(dataobspath, "B_CL_wf.csv"),  na = "NA",  row.names = FALSE)
+B_CL_wf %>%  write.csv(., file.path(dataobspath, "B_CL_wf.csv"),  na = "NA",  row.names = FALSE)
 
 rm(ls="grid")
 
@@ -97,7 +97,7 @@ grid <- BP_wof [, 1:6]  %>% mutate (count_n = NA)
 
 BP_CL_wof <- obs_data_to_grid (grid, data) %>% filter (count_n >= 0) %>% 
   mutate (REF = "CL_wof") %>%  rbind(., BP_wof) %>% mutate (REF = as.factor (REF))
-# BP_CL_wof %>%  write.csv(., file.path(dataobspath, "BP_CL_wof.csv"),  na = "NA",  row.names = FALSE)
+BP_CL_wof %>%  write.csv(., file.path(dataobspath, "BP_CL_wof.csv"),  na = "NA",  row.names = FALSE)
 
 rm(ls="grid")
 
@@ -106,12 +106,11 @@ grid <- BP_wf [, 1:6]  %>% mutate (count_n = NA)
 
 BP_CL_wf <- obs_data_to_grid (grid, data) %>% filter (count_n >= 0) %>% 
   mutate (REF = "CL_wf") %>%  rbind(., BP_wf) %>% mutate (REF = as.factor (REF))
-# BP_CL_wf %>%  write.csv(., file.path(dataobspath, "BP_CL_wf.csv"),  na = "NA",  row.names = FALSE)
+BP_CL_wf %>%  write.csv(., file.path(dataobspath, "BP_CL_wf.csv"),  na = "NA",  row.names = FALSE)
 
 rm(ls="grid", "data")
 
 #load gridded Bart data --------------------------------------------------------
-#source('Bartlein_gridded_convert_splash_20201118.R') # need to convert grid_B_nc$ALPHA to MI!!!!
 
 variab_name_ls <- c('mat', 'mtco', 'mtwa', 'map', 'alpha' ,'gdd5')
 
