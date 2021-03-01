@@ -7,6 +7,7 @@
 
 #pmip_ncpath
 /input_pmip4_nc/
+/input_pmip4_nc_OLD/
 
 #shapfiles called in functions_source
 /input_coast_shapefile/

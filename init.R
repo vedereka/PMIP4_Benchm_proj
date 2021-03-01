@@ -5,7 +5,7 @@ rm (list = ls())
 graphics.off()
 
 # set wd (revise as necessary)
- # setwd("D:/Dropbox/Benchm_LGM/PMIP4_Benchm_proj")
+setwd("G:/GDT/OneDrive - University of Reading/Paleoclimate/R_code/Code/PMIP4_Benchm_proj")
 
 options( scipen = 0, digits=3 )
 
