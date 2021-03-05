@@ -96,7 +96,7 @@ for (source in source_ls) {
   for (region in region_ls$reg_name) {
     for (mod_name in mod_files) {
       
-      mod_lab <- substr(mod_name, 124, nchar(mod_name) - 17) # 44 will change if using a different path name
+      mod_lab <- substr(mod_name, 124, nchar(mod_name) - 17) # 124 will change if using a different path name
       
       if (mod_name == mod_files[[6]]) {mod_lab <- "Had-GLAC"}
       if (mod_name == mod_files[[7]]) {mod_lab <- "Had-ICE"}
