@@ -6,12 +6,12 @@
 #### LOAD ALL DATA AND ARRANGE TO COMMON VARIABLES #### 
 
 ncfname <-
-  paste(dataobspath,'/Tierney2020_DA_ocn_regrid.nc',sep = '')
+  paste(dataobspath,'/ocean_data/Tierney2020_DA_ocn_regrid.nc',sep = '')
 
 # open NetCDF files
 ncin <- nc_open(ncfname)
 # Put the netcdf structure into text file for reference
-out_filename <- paste(dataobspath, "Tierney2020_DA_ocn_regrid_StructOut.txt", sep = "")
+out_filename <- paste(dataobspath, "/ocean_data/Tierney2020_DA_ocn_regrid_StructOut.txt", sep = "")
 sink(out_filename, split = TRUE, append = TRUE)
 print(ncin)
 sink()
@@ -132,5 +132,5 @@ rm(ls="p")
 # fig
 # 
 # ggsave(fig,file=paste(plotpath,"MargoOceanplots/","MargoData.jpg", sep = ""),width = 11.69,height = 8.27)
- 
+nc_close(ncin)
 graphics.off()

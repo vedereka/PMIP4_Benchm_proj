@@ -6,12 +6,12 @@
 #### LOAD ALL DATA AND ARRANGE TO COMMON VARIABLES #### 
 
 ncfname <-
-  paste(dataobspath,'AnnanHargreaves_sst.nc',sep = '')
+  paste(dataobspath,'/ocean_data/AnnanHargreaves_sst.nc',sep = '')
 
 # open NetCDF files
 ncin <- nc_open(ncfname)
 # Put the netcdf structure into text file for reference
-out_filename <- paste(dataobspath, "AnnanHargreaves_StructOut.txt", sep = "")
+out_filename <- paste(dataobspath, "/ocean_data/AnnanHargreaves_StructOut.txt", sep = "")
 sink(out_filename, split = TRUE, append = FALSE)
 print(ncin)
 
@@ -82,16 +82,14 @@ fig
 
 ggsave(fig,file=paste(plotpath, "AnnanHargreavesOceanplots/SST_ANOM_LGM.jpg", sep = ""),width = 11.69,height = 8.27)
 print(p)
-dev.off()
-rm(ls="p")
 
-print(p)
+rm(ls="p")
 dev.off()
 
 #----------------
 
 ncfname <-
-  paste(dataobspath,'AnnanHargreaves_sat.nc',sep = '')
+  paste(dataobspath,'/ocean_data/AnnanHargreaves_sat.nc',sep = '')
 
 # open NetCDF files
 ncinsat <- nc_open(ncfname)
@@ -129,7 +127,7 @@ colbreaks <- c(-40, -20, -12, -8, -4, -2, -1, 0, 1, 2, 3)
 #colbreaks <- c(seq(from = round(min(SAT_anom, na.rm = TRUE)),to = round(max(SAT_anom, na.rm = TRUE)),length.out = 11))
 print(colbreaks)
 
-p <- plot_mtco_eg_disc(
+p_anom <- plot_mtco_eg_disc(
   mat_withlatlon = SAT_anom,
   cols = cols,
   brkpnt = colbreaks,
@@ -138,16 +136,16 @@ p <- plot_mtco_eg_disc(
   shapefile_df = shapefile_df_180
 )
 
-assign(paste("map_plot_SATanom",varname,sep="_"),p)
+assign(paste("map_plot_SATanom",varname,sep="_"),p_anom)
 
 
 fig <- ggarrange(get(paste("map_plot_SATanom", varname, sep="_")),   ncol = 1, nrow = 1)
 fig
 
 ggsave(fig,file=paste(plotpath, "AnnanHargreavesOceanplots/SAT_ANOM_LGM.jpg", sep = ""),width = 11.69,height = 8.27)
-print(p)
+print(p_anom)
 dev.off()
-rm(ls="p")
+rm(ls="p_anom")
 
 
 
@@ -165,5 +163,6 @@ rm(ls="p")
 # fig
 # 
 # ggsave(fig,file=paste(plotpath,"MargoOceanplots/","MargoData.jpg", sep = ""),width = 11.69,height = 8.27)
- 
+ nc_close(ncin)
+ nc_close(ncinsat)
 graphics.off()

@@ -62,25 +62,22 @@ for (varname in var_ls){
 # Map plots
   rng <- range (margoALL[n], na.rm = TRUE)
   #a range to have the same min and max for both plots
-  breakcol <- seq(from=round(rng[1]), to=round(rng[2]), length.out = 6)
-  lim_colbar <- c(floor(rng[1]), ceiling(rng[2]))
+  #breakcol <- seq(from=round(rng[1]), to=round(rng[2]), length.out = 6)
+  breakcol <- c(-12, -9, -6, -3, 0, 3, 6, 9)
+  lim_colbar <- c(-12, 12)
+  #lim_colbar <- c(floor(rng[1]), ceiling(rng[2]))
   
   p_map <- mp +
     geom_point(data=na.omit(margoALL), aes_string(x='LON', y='LAT', colour = varname),
                alpha = 0.8, size = 1.75, shape = 15, show.legend = T) +
-    scale_fill_gradient2(low = "#e41a1c", mid = "#377eb8", high = "#4daf4a",space = "Lab",
+    #scale_fill_gradient2(low = "#e41a1c", mid = "#377eb8", high = "#4daf4a",space = "Lab",
+    scale_fill_gradient2(low = "#4daf4a", mid = "#377eb8", high = "#e41a1c",space = "Lab",
                          na.value = "grey50", guide = "colourbar",
                          aesthetics = "colour",breaks=breakcol,
                          limits=lim_colbar) +
-    labs(title = paste(varname, sep=""), color = varname)
+    labs(title = paste("Margo", varname, sep=" "), color = varname)
   
-  
-  # p_map <- ggplot(na.omit(margoALL), aes_string(x = 'LAT', varname)) +
-  #   geom_point(alpha = 1,color = "darkred", size = 2) +
-  #   theme(plot.caption = element_text(size=10, vjust = -0.18)) +
-  #   labs(title = paste ("Map Plot of Margo Data",varname, sep = " "),
-  #        x = refdata1,
-  #        y = varname)
+
   
   assign(paste("map_plot",varname,sep="_"),p_map)
   rm(ls="p_map")
