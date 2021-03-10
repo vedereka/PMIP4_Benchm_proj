@@ -47,7 +47,7 @@ cairo_pdf(
   height = 8.27, onefile = T)
 
 cols <- (rev(brewer.pal(11, "RdBu")))
-title_name = 'SST_LGM'
+title_name = 'SST_LGM (Tierney)'
 varunits = 'K'
 
 #colbreaks
@@ -63,8 +63,18 @@ p <- plot_mtco_eg_disc(
   varunits = varunits,
   shapefile_df = shapefile_df_180
 )
+
+assign(paste("map_plot_SST",varname,sep="_"),p)
+
+
+fig <- ggarrange(get(paste("map_plot_SST", varname, sep="_")),   ncol = 1, nrow = 1)
+fig
+
+ggsave(fig,file=paste(plotpath, "TierneyOceanplots/Tierney_SST_LGM.jpg", sep = ""),width = 11.69,height = 8.27)
 print(p)
 dev.off()
+rm(ls="p")
+
 
 # get the variable (SSTLGM) and set the dimensions as lat and lon
 SST_anom <- (ncvar_get(ncin, "deltaSST"))
@@ -80,7 +90,7 @@ cairo_pdf(
   height = 8.27, onefile = T)
 
 cols <- (rev(brewer.pal(11, "RdBu")))
-title_name = 'SST_ANOM_LGM'
+title_name = 'SST_ANOM_LGM (Tierney)'
 varunits = 'K'
 
 #colbreaks
@@ -96,8 +106,17 @@ p <- plot_mtco_eg_disc(
   varunits = varunits,
   shapefile_df = shapefile_df_180
 )
+
+assign(paste("map_plot",varname,sep="_"),p)
+
+
+fig <- ggarrange(get(paste("map_plot", varname, sep="_")),   ncol = 1, nrow = 1)
+fig
+
+ggsave(fig,file=paste(plotpath, "TierneyOceanplots/Tierney_SST_ANOM_LGM.jpg", sep = ""),width = 11.69,height = 8.27)
 print(p)
 dev.off()
+rm(ls="p")
 
 # 
 # # 

@@ -57,7 +57,7 @@ cairo_pdf(
   height = 8.27, onefile = T)
 
 cols <- (rev(brewer.pal(11, "RdBu")))
-title_name = 'SST Anom'
+title_name = 'SST Anom (Annan-Hargreaves)'
 varunits = 'K'
 
 #colbreaks
@@ -73,6 +73,18 @@ p <- plot_mtco_eg_disc(
   varunits = varunits,
   shapefile_df = shapefile_df_180
 )
+
+assign(paste("map_plot_SSTanom",varname,sep="_"),p)
+
+
+fig <- ggarrange(get(paste("map_plot_SSTanom", varname, sep="_")),   ncol = 1, nrow = 1)
+fig
+
+ggsave(fig,file=paste(plotpath, "AnnanHargreavesOceanplots/SST_ANOM_LGM.jpg", sep = ""),width = 11.69,height = 8.27)
+print(p)
+dev.off()
+rm(ls="p")
+
 print(p)
 dev.off()
 
@@ -109,7 +121,7 @@ cairo_pdf(
   height = 8.27, onefile = T)
 
 cols <- (rev(brewer.pal(11, "RdBu")))
-title_name = 'SAT ANOM LGM'
+title_name = 'SAT ANOM LGM (Annan-Hargreaves)'
 varunits = 'K'
 
 #colbreaks
@@ -125,8 +137,19 @@ p <- plot_mtco_eg_disc(
   varunits = varunits,
   shapefile_df = shapefile_df_180
 )
+
+assign(paste("map_plot_SATanom",varname,sep="_"),p)
+
+
+fig <- ggarrange(get(paste("map_plot_SATanom", varname, sep="_")),   ncol = 1, nrow = 1)
+fig
+
+ggsave(fig,file=paste(plotpath, "AnnanHargreavesOceanplots/SAT_ANOM_LGM.jpg", sep = ""),width = 11.69,height = 8.27)
 print(p)
 dev.off()
+rm(ls="p")
+
+
 
 # 
 # # 

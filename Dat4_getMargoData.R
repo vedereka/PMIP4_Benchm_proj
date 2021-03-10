@@ -6,7 +6,7 @@
 
 #### LOAD ALL DATA AND ARRANGE TO COMMON VARIABLES #### 
 
-margoALL <- read.csv(paste (dataobspath,"margodatagridded_edit.csv",sep="")) %>% 
+margoALL <- read.csv(paste (dataobspath,"/ocean_data/margodatagridded_edit.csv",sep="")) %>% 
   dplyr::select(LON, LAT,SST_ANN, SST_JAS, SST_JFM, ANOM_ANN,ANOM_JAS,ANOM_JFM, ANOM_SD_ANN,ANOM_SD_JAS, ANOM_SD_JFM,ANOM_MIN_ANN,	ANOM_MIN_JAS,	ANOM_MIN_JFM,	ANOM_MAX_ANN,	ANOM_MAX_JAS,	ANOM_MIN_JFM) %>%
   dplyr::mutate(LON = ((LON+ 180) %% 360) - 180)
 
