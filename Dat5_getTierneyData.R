@@ -32,7 +32,7 @@ nc_lon <- (ncvar_get(ncin, 'lon'))
 
 # Convert lon to -80 to 180
 nc_lon[nc_lon > 180] <- nc_lon[nc_lon > 180] - 360
-print(paste(nc_lon))
+#print(paste(nc_lon))
 
 
 miss_value = 'NaN'
@@ -43,7 +43,7 @@ dimnames(SST_all) <- list(lon=nc_lon, lat=nc_lat)
 
 # plot set up
 cairo_pdf(
-  paste(plotpath, 'TierneyOceanplots/SST_LGM.pdf', sep = ""),width = 11.69,
+  paste(plotpath, 'TierneyOceanplots/Tierney_SST_LGM.pdf', sep = ""),width = 11.69,
   height = 8.27, onefile = T)
 
 cols <- (rev(brewer.pal(11, "RdBu")))
@@ -51,7 +51,8 @@ title_name = 'SST_LGM'
 varunits = 'K'
 
 #colbreaks
-colbreaks <- c(seq(from = min(SST_all, na.rm = TRUE),to = max(SST_all, na.rm = TRUE),length.out = 11))
+colbreaks <- c(-3, 0, 3, 6, 9, 12, 15, 18, 20, 24, 27)
+#colbreaks <- c(seq(from = min(SST_all, na.rm = TRUE),to = max(SST_all, na.rm = TRUE),length.out = 11))
 
 
 p <- plot_mtco_eg_disc(
@@ -75,7 +76,7 @@ dimnames(SST_anom) <- list(lon=nc_lon, lat=nc_lat)
 
 # plot set up
 cairo_pdf(
-  paste(plotpath, 'TierneyOceanplots/SST_ANOM_LGM.pdf', sep = ""),width = 11.69,
+  paste(plotpath, 'TierneyOceanplots/Tierney_SST_ANOM_LGM.pdf', sep = ""),width = 11.69,
   height = 8.27, onefile = T)
 
 cols <- (rev(brewer.pal(11, "RdBu")))
@@ -83,8 +84,9 @@ title_name = 'SST_ANOM_LGM'
 varunits = 'K'
 
 #colbreaks
-colbreaks <- c(seq(from = min(SST_anom, na.rm = TRUE),to = max(SST_anom, na.rm = TRUE),length.out = 11))
-
+colbreaks <- c(-40, -20, -12, -8, -4, -2, -1, 0, 1, 2, 3)
+#colbreaks <- c(seq(from = min(SST_anom, na.rm = TRUE),to = max(SST_anom, na.rm = TRUE),length.out = 11))
+print(colbreaks)
 
 p <- plot_mtco_eg_disc(
   mat_withlatlon = SST_anom,
