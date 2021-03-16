@@ -9,9 +9,18 @@
 margoALL <- read.csv(paste (dataobspath,"/ocean_data/margodatagridded_edit.csv",sep="")) %>% 
   dplyr::select(LON, LAT,SST_ANN, SST_JAS, SST_JFM, ANOM_ANN,ANOM_JAS,ANOM_JFM, ANOM_SD_ANN,ANOM_SD_JAS, ANOM_SD_JFM,ANOM_MIN_ANN,	ANOM_MIN_JAS,	ANOM_MIN_JFM,	ANOM_MAX_ANN,	ANOM_MAX_JAS,	ANOM_MIN_JFM) %>%
   dplyr::mutate(LON = ((LON+ 180) %% 360) - 180)
-
 margoALL[margoALL == -99.99] <- NA 
 
+#
+# Create a .csv file that is in same format as the Bartlein data (Same column names etc, to simply scores calculation. Later can combine other ocean datasets.
+margoOut <- margoALL %>% 
+  dplyr::select(LON, LAT,SST_ANN, ANOM_ANN, ANOM_SD_ANN) %>% 
+  dplyr::rename (lon=LON, lat=LAT, SST_ann=SST_ANN, SST_anom_ann=ANOM_ANN, SST_anom_ann_sd=ANOM_SD_ANN)
+  
+
+data_margo_clean <- cbind(margoOut, "Margo") %>% 
+  `colnames<-`(c("lon", "lat", "SST_ann", "SST_anom_ann", "SST_anom_ann_sd", "REF"))
+write.csv(data_margo_clean, paste(dataobspath, "ocean_data/data_margo_clean.csv", sep=""), row.names=FALSE)
 
 #df <- melt(margoALL, na.rm = FALSE, id = c('LAT','LON'))
 #grid <- expand.grid(lon = lon, lat = lat)

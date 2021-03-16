@@ -51,7 +51,7 @@ for (model in model_ls){
       
       # now, data_Vec has all months in columns. one row per latlon combination
       
-      # reshaping the "full" data frame to an array. If ocen gridcells have been removed, you need to reshape an incomplete data
+      # reshaping the "full" data frame to an array. If ocean gridcells have been removed, you need to reshape an incomplete data
       # frame (more difficult). Check instructions here: http://geog.uoregon.edu/bartlein/courses/geog490/week04-netCDF.html#create-and-write-a-netcdf-file
       # This is a two-step conversion:
       # 1) converting that part of the the data frame containing the 12 monthly values into a 2-d matrix, and then 
