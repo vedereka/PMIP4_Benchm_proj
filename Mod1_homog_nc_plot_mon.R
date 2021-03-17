@@ -141,8 +141,7 @@ period_sel <- c("LGM", "PI")
         colnames(sftgif) <- ncin_sftlf [["dim"]][["lat"]][["vals"]]
       }
       
-      land_mask <-
-        sftgif * sftlf # use this to multiply it by the variable and remove ocean gridcells
+      land_mask <- sftgif * sftlf # use this to multiply it by the variable and remove ocean gridcells
       
       land_mask <- land_mask[,order(-as.numeric(colnames(land_mask)))] %>% as.matrix()
       

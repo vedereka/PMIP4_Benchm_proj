@@ -45,7 +45,7 @@ mod_files_lab <- lapply(list.files(mod_dir, full.names = F), FUN = my_name_trim)
 # variable name in model nc files
 #mod_variable_ls <- c('tas_anom', 'mtco_anom','mtwa_anom','pre_anom','gdd5_anom')
 
-mod_variable_ls <- c('tas_anom')
+mod_variable_ls <- c('tas_anom', 'pre_anom')
 
 # use model grid or site locations as basis of comparison
 # (basically, Hantson et al 2020 = FALSE; Forrest et al in prep = TRUE)

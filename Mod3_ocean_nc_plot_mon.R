@@ -15,11 +15,11 @@ paste("Model metadata. Created on ", Sys.Date(), sep = '')
 
 
 #list models, variables and time-slices (months)
-#model_ls <-c('AWIESM1','AWIESM2','CCSM4-UofT','CESM1-2','CESM2-1','HadCM3-GLAC1D',
-            # 'HadCM3-ICE6GC','iLOVECLIM1-1-1-GLAC-1D','iLOVECLIM1-1-1-ICE-6G-C',
-            # 'INM-CM4-8','IPSLCM5A2','MIROC-ES2L','MPI-ESM1-2')
+model_ls <-c('AWIESM1','AWIESM2','CCSM4-UofT','CESM1-2','CESM2-1','HadCM3-GLAC1D',
+             'HadCM3-ICE6GC','iLOVECLIM1-1-1-GLAC-1D','iLOVECLIM1-1-1-ICE-6G-C',
+             'INM-CM4-8','IPSLCM5A2','MIROC-ES2L','MPI-ESM1-2')
 
-model_ls <-c('MIROC-ES2L')
+#model_ls <-c('MIROC-ES2L')
 var_ls <- c('tas', 'pr', 'clt')
 mon_ls <- seq(1,12,1)
 period_sel <- c("LGM", "PI")
@@ -164,7 +164,7 @@ period_sel <- c("LGM", "PI")
       
       land_mask <- land_mask[,order(-as.numeric(colnames(land_mask)))] %>% as.matrix()
       #print(land_mask)
-      print('val')
+     
       
 #--------Plot the land mask ------------------
       # colbreaks <- c(0, 1)
@@ -200,7 +200,6 @@ period_sel <- c("LGM", "PI")
         m_PI <- ncvar_get(ncin, variab)
         ncin_PI <- ncin
       }
-      
       
       } 
 
@@ -342,9 +341,9 @@ period_sel <- c("LGM", "PI")
         dev.off()
 
         # save anomaly files that month/model/variable
-        saveRDS(m_mon_anom, file = paste(rdspath,model,"_",variab,"_anom_",mon,".RDS", sep=""))
-        saveRDS(m_mon_PI_df, file = paste(rdspath,model,"_",variab,"_PI_",mon,".RDS", sep=""))
-        saveRDS(m_mon_LGM_df, file = paste(rdspath,model,"_",variab,"_LGM_",mon,".RDS", sep=""))
+        saveRDS(m_mon_anom, file = paste(rdspath,model,"_ocean_",variab,"_anom_",mon,".RDS", sep=""))
+        saveRDS(m_mon_PI_df, file = paste(rdspath,model,"_ocean_",variab,"_PI_",mon,".RDS", sep=""))
+        saveRDS(m_mon_LGM_df, file = paste(rdspath,model,"_ocean_",variab,"_LGM_",mon,".RDS", sep=""))
 
         # save lat/lon values for that model (just once per model)
 
