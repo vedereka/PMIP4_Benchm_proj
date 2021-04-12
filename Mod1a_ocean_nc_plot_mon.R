@@ -93,6 +93,7 @@ period_sel <- c("LGM", "PI")
       
       if (length(dim(sftlf)) == 3){ # CESM models have a third dimension (???)
         sftlf <- sftlf [,,1]
+        print(paste("Land mask in 3 dimensions?", model, sep=" "))
       }
 
       sftgif <- ncvar_get(ncin_sftgif, "sftgif")
@@ -106,21 +107,21 @@ period_sel <- c("LGM", "PI")
       
      #  # This keeps the areas which are not ice (whether % or fraction)
      if (max(sftgif,na.rm=T)==100){
-         sftgif[sftgif > 20] <- NA
-         sftgif[sftgif <= 20] <- 1 ## keep if no ice
+         sftgif[sftgif > 50] <- NA
+         sftgif[sftgif <= 50] <- 1 ## keep if no ice
      } else {
-         sftgif[sftgif > 0.2] <- NA # keep if less than 80% ice
-         sftgif[sftgif <= 0.2] <- 1
+         sftgif[sftgif > 0.5] <- NA # keep if less than 80% ice
+         sftgif[sftgif <= 0.5] <- 1
     }
       
       
-      # This keeps squares that are < 20% land, as ocean squares
+      # This keeps squares that are < 50% land, as ocean squares
       if (max(sftlf,na.rm=T)==100){
-        sftlf[sftlf > 20] <- NA
-        sftlf[sftlf <= 20] <- 1 # keep less than 20% land = ocean
+        sftlf[sftlf > 50] <- NA
+        sftlf[sftlf <= 50] <- 1 # keep less than 50% land = ocean
       } else {
-        sftlf[sftlf > 0.2] <- NA
-        sftlf[sftlf <= 0.2] <- 1 # keep less than 20% land = ocean
+        sftlf[sftlf > 0.5] <- NA
+        sftlf[sftlf <= 0.5] <- 1 # keep less than 50% land = ocean
       }
       
       
@@ -162,28 +163,8 @@ period_sel <- c("LGM", "PI")
       # But this should leave us only the ocean squares now
       land_mask <- sftgif * sftlf # use this to multiply it by the variable and remove ocean gridcells
       
-      land_mask <- land_mask[,order(-as.numeric(colnames(land_mask)))] %>% as.matrix()
-      #print(land_mask)
      
-      
-#--------Plot the land mask ------------------
-      # colbreaks <- c(0, 1)
-      # var_title = 'Ocean mask'
-      # varunits = "none"
-      # cairo_pdf(
-      #   paste(plotpath, '/LGM_Landmask_', model,per, '_landmask.pdf', sep = ""),width = 11.69,
-      #   height = 8.27, onefile = T)
-
-      # p <- plot_mtco_eg_disc(
-      #   mat_withlatlon = land_mask,
-      #   cols = cols,
-      #   brkpnt = colbreaks,
-      #   title_name = var_title,
-      #   varunits = varunits,
-      #   shapefile_df = shapefile_df_180
-      # )
-      # print(p)
-      # dev.off()
+      land_mask <- land_mask[,order(-as.numeric(colnames(land_mask)))] %>% as.matrix()
 
 # -------------------------------------------------------      
       if (is.null(ncin$dim$axis_3$len)) {
@@ -249,6 +230,9 @@ period_sel <- c("LGM", "PI")
         x_df <- fortify (as.data.frame(x_df))
         m_mon_PI_df <- as.matrix(x_df)
         
+      
+        # -------------------------------------
+        
         # create anomalies
         m_mon_anom <- m_mon_LGM_df- m_mon_PI_df
         
@@ -261,6 +245,17 @@ period_sel <- c("LGM", "PI")
         cols <- (rev(brewer.pal(11, "RdBu")))
         varunits <- paste (variab)
         
+        # Plot land mask ------------------
+        jpeg(paste(plotpath,"oceanMask_ocean_data_",model,'.jpg', sep = ""), width = 600, height = 400,quality = 75)
+        x_trial <- m_mon_anom #land_mask
+        cutpts <-  c(seq(from = min(x_trial, na.rm=TRUE), to = max(x_trial, na.rm=TRUE),length.out =10))
+        lat <- ncin_LGM[["dim"]][["lat"]][["vals"]]
+        lon <- ncin_LGM[["dim"]][["lon"]][["vals"]]
+        grid <- expand.grid(lon=lon, lat=lat)
+        lp <- levelplot(x_trial ~ lon * lat, data=grid, at=cutpts, cuts=11, pretty=T, col.regions=(rev(brewer.pal(10,"RdBu"))), main="testing array")
+        print(lp)
+        dev.off()
+       #--------------------------------------------- 
         
         # MAP 1: ANOMALIES
         cairo_pdf(
@@ -340,6 +335,7 @@ period_sel <- c("LGM", "PI")
         print(p)
         dev.off()
 
+       
         # save anomaly files that month/model/variable
         saveRDS(m_mon_anom, file = paste(rdspath,model,"_ocean_",variab,"_anom_",mon,".RDS", sep=""))
         saveRDS(m_mon_PI_df, file = paste(rdspath,model,"_ocean_",variab,"_PI_",mon,".RDS", sep=""))

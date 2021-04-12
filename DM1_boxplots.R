@@ -167,14 +167,18 @@ mod_variable_ls <- c('tas_anom','mtco_anom','mtwa_anom','pre_anom', 'gdd5_anom')
 
 # location of model output
 mod_dir <- ncpath
-mod_files <- list.files(mod_dir, full.names = TRUE)
+mod_files <- list.files(mod_dir, pattern = "anomalies", full.names = TRUE)
+
 # create list of model names for output
-model_ls <- lapply(list.files(mod_dir, full.names = F), FUN = my_name_trim) %>% as.character (.)
+model_ls <- lapply(list.files(mod_dir, pattern="anomalies", full.names = F), FUN = my_name_trim) %>% as.character (.) 
+
+
+#print(model_ls)
 obs_coord = unique(obs[,1:2])
 
 for (mod_name in model_ls){
   
-  ncname <- paste(ncpath,mod_name, "_LGM_anomalies.nc",sep="") 
+  ncname <- paste(ncpath, mod_name, "_LGM_anomalies.nc",sep="") 
   ncin <- nc_open(ncname) 
   lat <- ncin[["dim"]][["lat"]][["vals"]]; nlat <- length(lat)
   lon <- ncin[["dim"]][["lon"]][["vals"]];nlon <- length(lon)
@@ -207,6 +211,7 @@ for (mod_name in model_ls){
       pts <- rbind (pts, var_extr_df)
     }
   }
+  
 }
 nc_close(ncin)
 
@@ -219,6 +224,8 @@ pts <- data.frame(lapply(pts, function(x) {gsub("mtwa_anom", "MTWA", x)}))
 pts <- data.frame(lapply(pts, function(x) {gsub("pre_anom", "MAP", x)}))
 pts <- data.frame(lapply(pts, function(x) {gsub("gdd5_anom", "GDD5", x)}))
 
+print(pts)
+#print(obs)
 data_all = rbind(obs, pts)
 
 #remove => CL (=Cleator at Bartlein sites)

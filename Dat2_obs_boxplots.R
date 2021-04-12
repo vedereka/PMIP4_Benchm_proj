@@ -1,7 +1,7 @@
 ### create data boxplots (with Bartlein and Cleator for overlapping sites)
 # create maps of Bartlein sites with/without inversions as well as maps with data available for each variable
 # Created by Laia Comas-Bru in September 2020
-# Last modified: February 2021Note: MI_converted_SD not calculated (as is it is using MI)
+# Last modified: February 2021Note: MI_converted_SD not calculated (as it is using MI)
 
 #### LOAD OBSERVATIONS AND ORGANISE DATA #### 
 #don't have MI_SD (added a col with NAs in the CSV source file till that's fixed.)
@@ -544,3 +544,4 @@ graphics.off()
 # Clear environment
 #rm(list = ls()) 
 
+# 

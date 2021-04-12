@@ -211,7 +211,7 @@ FindGridCoords <- function (myLat, myLon, data){
   return (outCoords)
 }
 
-#### function opposite to "%in%" to be used in fi lters ####
+#### function opposite to "%in%" to be used in filters ####
 `%notin%` <- Negate(`%in%`)
 
 

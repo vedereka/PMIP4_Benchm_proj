@@ -145,7 +145,6 @@ period_sel <- c("LGM", "PI")
       
       land_mask <- land_mask[,order(-as.numeric(colnames(land_mask)))] %>% as.matrix()
       
-      
       if (is.null(ncin$dim$axis_3$len)) {
         targetSize <-c(ncin[["dim"]][["lon"]][["len"]], ncin[["dim"]][["lat"]][["len"]])#lon*lat
       } else{

@@ -37,42 +37,29 @@
 # Last modified: February 2021
 # 
 ##### SET STUFF ################################################################################
-# In case we run this without running DM2 in the same session
-source(paste(getwd(),"/LGM_Benchmarking/cfg.r", sep=""))
 
 #load observations 
-obs_file <- paste (dataobspath,'/data_obs_all_wf.csv',sep="")
+obs_file <- paste (dataobspath,'ocean_data/margo_bench_ready.csv',sep="")
 obsraw <- read.csv(obs_file)  
 
-#modify ref names (to short comb)
-obsraw <- obsraw %>% mutate(ref = ifelse(ref == "bartlein_min" , "B_min",
-                                         ifelse( ref == "bartlein_max", "B_max",
-                                                 ifelse(ref == "bartlein", "B",
-                                                        ifelse( ref == "prentice", "P", 
-                                                                ifelse( ref == "cleator_min", "CL_min",
-                                                                        ifelse(ref == "cleator_max", "CL_max",
-                                                                               ifelse(ref == "cleator", "CL", "other"))))))))
+# obsraw$lat <- obsraw$lat+0.001 # I have to do this, otherwise one of the models does not work. No idea why!!?
+# obsraw$lon <- obsraw$lon+0.001
 
-obsraw <- obsraw %>% filter (ref != "P") # no uncertainties in Prentice et al data -> remove completely
-obsraw$lat <- obsraw$lat+0.001 # I have to do this, otherwise one of the models does not work. No idea why!!?
-obsraw$lon <- obsraw$lon+0.001
-
-obsraw <- obsraw %>% filter (obsraw$ref != "B", obsraw$ref != "B_min", obsraw$ref != "B_max") # no B data in the tropics.
 
 # location of model output
-mod_dir <- ncpath
-mod_files <- list.files(mod_dir, pattern ="anomalies",  full.names = TRUE)
-
-
+mod_dir <- ncpath_ocean
+mod_files <- list.files(mod_dir, full.names = TRUE)
+#print(mod_files)
 # create list of model names for output
-mod_files_lab <- lapply(list.files(mod_dir, pattern ="anomalies", full.names = F), FUN = my_name_trim)
+mod_files_lab <- lapply(list.files(mod_dir, full.names = F), FUN = my_name_trim)
 mod_files_lab [[6]] <- "HadCM3-GLAC" # names too long
 mod_files_lab [[7]] <- "HadCM3-ICE"
 mod_files_lab [[8]] <- "iLOVECLIM-GLAC" # names too long
 mod_files_lab [[9]] <- "iLOVECLIM-ICE"
 
 # variable name in model nc files
-mod_variable_ls <- c('tas_anom', 'mtco_anom','mtwa_anom','pre_anom','gdd5_anom')
+mod_variable_ls <- c('ocean_tas_anom', 'ocean_mtco_anom','ocean_mtwa_anom') 
+#,'pre_anom','gdd5_anom')
 
 # define regions (as in Kageyama et al., 2020 CP in review)
 
@@ -81,18 +68,25 @@ mod_variable_ls <- c('tas_anom', 'mtco_anom','mtwa_anom','pre_anom','gdd5_anom')
   #   as.data.frame (.) %>%
   #   dplyr::rename (reg_name = V1, min_lat = V2, max_lat = V3, min_lon = V4, max_lon = V5)
   
-  
-  ## uncomment below to run all regions at once
-  region_ls <- rbind( c("global", -90,90,-180,180),c("NH", 0,90,-180,180),c("NHextratropics", 30,90,-180,180),
-         c("NTropics", 0,30,-180,180),c("NAmerica", 20,50,-140,-60),
-         c("TropicalAmericas", -30,30,-120,-35), c("WesternEurope", 35,70,-10,30),#c("TropicalAsia",8,30,60,120),
-         c("ExtratropicalAsia", 30,75,60,135), c("Africa",-35,35,-10,50)) %>%
+  # Removed ExtraTropical Asia from the set below, as it causes an error in the scoreplot routines (no data points?) 
+  region_ls <- rbind(c("global", -90,90,-180,180),c("NH", 0,90,-180,180),c("NHextratropics", 30,90,-180,180),
+                     c("NTropics", 0,30,-180,180),c("NAmerica", 20,50,-140,-60),
+                     c("TropicalAmericas", -30,30,-120,-35), c("WesternEurope", 35,70,-10,30), c("TropicalAsia",8,30,60,120), c("Africa",-35,35,-10,50)) %>%
     as.data.frame (.) %>%
     dplyr::rename (reg_name = V1, min_lat = V2, max_lat = V3, min_lon = V4, max_lon = V5)
+  
+  ## uncomment below to run all regions at once
+  # region_ls <- rbind( c("global", -90,90,-180,180),c("NH", 0,90,-180,180),c("NHextratropics", 30,90,-180,180),
+  #        c("NTropics", 0,30,-180,180),c("NAmerica", 20,50,-140,-60),
+  #        c("TropicalAmericas", -30,30,-120,-35), c("WesternEurope", 35,70,-10,30),#c("TropicalAsia",8,30,60,120),
+  #        c("ExtratropicalAsia", 30,75,60,135), c("Africa",-35,35,-10,50)) %>%
+  #   as.data.frame (.) %>%
+  #   dplyr::rename (reg_name = V1, min_lat = V2, max_lat = V3, min_lon = V4, max_lon = V5)
 
 # define source of data (CL/B)  
 source_ls <- unique (obsraw$ref)
 
+print(source_ls)
 ##### EXTRACT DATA -> CREATE AND SAVE SCATTERPLOTS ################################################################################
 
 for (source in source_ls) {
@@ -108,7 +102,7 @@ for (source in source_ls) {
       
       for (mod_varname in mod_variable_ls) {
         mods <- lapply(mod_name, raster, varname = mod_varname) # for 2D netCDF files
-        
+
         ## filter obsraw by ref and region ##
         obs <- obsraw %>% filter (ref == source)
         
@@ -124,19 +118,20 @@ for (source in source_ls) {
         obsSims <- extractComparison(mods[[1]])
         
         plot_data <- na.omit(as.data.frame.array(t(obsSims)))
-        
+        print(mod_varname)
         ## save data file for plotting (otherwise, ggarrange loses variables that are modif in loop)
-        assign(paste("plot_data", mod_varname, sep = "_"), plot_data)
+        assign(paste("plot_data",mod_varname, sep = "_"), plot_data)
         rm(ls = "plot_data", "obs", "mods", "obsSims")
       }
+
       
       fig <- ggarrange(
-        my_scatterplot(plot_data_tas_anom),
-        my_scatterplot(plot_data_mtco_anom),
-        my_scatterplot(plot_data_mtwa_anom),
-        my_scatterplot(plot_data_pre_anom),
-        my_scatterplot(plot_data_gdd5_anom),
-        labels = c("tas", "mtco", "mtwa", "pre", "gdd5"),
+        my_scatterplot(plot_data_ocean_tas_anom),
+        my_scatterplot(plot_data_ocean_mtco_anom),
+        my_scatterplot(plot_data_ocean_mtwa_anom),
+        #my_scatterplot(plot_data_pre_anom),
+        #my_scatterplot(plot_data_gdd5_anom),
+        labels = c("tas", "mtco", "mtwa"),
         # font.label = list (size=12, face="bold"),
         label.x = 0,
         label.y = 1.028,

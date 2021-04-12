@@ -5,40 +5,56 @@
 # Note: Africa plots commented (not needed)
 
 #### LOAD ALL DATA AND ARRANGE TO COMMON VARIABLES #### 
-
+# This gets the original Margo csv data
 margoALL <- read.csv(paste (dataobspath,"/ocean_data/margodatagridded_edit.csv",sep="")) %>% 
-  dplyr::select(LON, LAT,SST_ANN, SST_JAS, SST_JFM, ANOM_ANN,ANOM_JAS,ANOM_JFM, ANOM_SD_ANN,ANOM_SD_JAS, ANOM_SD_JFM,ANOM_MIN_ANN,	ANOM_MIN_JAS,	ANOM_MIN_JFM,	ANOM_MAX_ANN,	ANOM_MAX_JAS,	ANOM_MIN_JFM) %>%
+  dplyr::select(LON, LAT,SST_ANN, SST_JAS, SST_JFM, ANOM_ANN,ANOM_JAS,ANOM_JFM, ANOM_SD_ANN,ANOM_SD_JAS, ANOM_SD_JFM,ANOM_MIN_ANN,ANOM_MIN_JAS,	ANOM_MIN_JFM,	ANOM_MAX_ANN,	ANOM_MAX_JAS,	ANOM_MAX_JFM) %>% 
   dplyr::mutate(LON = ((LON+ 180) %% 360) - 180)
+
+# Set missing data values to NA 
 margoALL[margoALL == -99.99] <- NA 
+# Set max and min values to NA if they are the same as the Mean
+# Must be a cleaner way to do this
+margoALL$ANOM_MIN_ANN[margoALL$ANOM_MIN_ANN == margoALL$ANOM_ANN] <- NA 
+margoALL$ANOM_MAX_ANN[margoALL$ANOM_MAX_ANN == margoALL$ANOM_ANN] <- NA 
+margoALL$ANOM_MIN_JAS[margoALL$ANOM_MIN_JAS == margoALL$ANOM_JAS] <- NA 
+margoALL$ANOM_MAX_JAS[margoALL$ANOM_MAX_JAS == margoALL$ANOM_JAS] <- NA 
+margoALL$ANOM_MIN_JFM[margoALL$ANOM_MIN_JFM == margoALL$ANOM_JFM] <- NA 
+margoALL$ANOM_MAX_JFM[margoALL$ANOM_MAX_JFM == margoALL$ANOM_JFM] <- NA 
 
-#
 # Create a .csv file that is in same format as the Bartlein data (Same column names etc, to simply scores calculation. Later can combine other ocean datasets.
-margoOut <- margoALL %>% 
-  dplyr::select(LON, LAT,SST_ANN, ANOM_ANN, ANOM_SD_ANN) %>% 
-  dplyr::rename (lon=LON, lat=LAT, SST_ann=SST_ANN, SST_anom_ann=ANOM_ANN, SST_anom_ann_sd=ANOM_SD_ANN)
+data_tas_margo_clean <- margoALL %>% mutate(REF = "Margo") %>%
+  dplyr::select(LON, LAT,SST_ANN, SST_JAS, SST_JFM, ANOM_ANN, ANOM_JAS,ANOM_JFM, ANOM_MIN_ANN, ANOM_MIN_JAS,	ANOM_MIN_JFM,	ANOM_MAX_ANN,	ANOM_MAX_JAS,	ANOM_MAX_JFM, REF) %>%
+  dplyr::rename (lon=LON, lat=LAT, MAT=ANOM_ANN, MTWA=ANOM_JAS, MTCO=ANOM_JFM)
+
+write.csv(data_tas_margo_clean, paste(dataobspath, "ocean_data/data_margo_tas_clean.csv", sep=""), row.names=FALSE)
+
+margo_base <- data_tas_margo_clean %>% 
+  dplyr::select(lon, lat, MAT, MTWA, MTCO, REF) %>% 
+`colnames<-`(c("lon", "lat", "MAT", "MTWA", "MTCO","REF"))
+
+margo_min <- data_tas_margo_clean %>% 
+  dplyr::select(lon, lat, ANOM_MIN_ANN,ANOM_MIN_JAS, ANOM_MIN_JFM, REF) %>% 
   
+  dplyr::rename (MAT=ANOM_MIN_ANN, MTWA=ANOM_MIN_JAS, MTCO=ANOM_MIN_JFM) %>%
+ `colnames<-`(c("lon", "lat", "MAT", "MTWA", "MTCO","REF"))
+ margo_min$REF = "Margo_min"
+ 
+ 
+margo_max <- data_tas_margo_clean %>%
+  dplyr::select(lon, lat, ANOM_MAX_ANN,ANOM_MAX_JAS,	ANOM_MAX_JFM, REF) %>%
+  dplyr::rename (MAT=ANOM_MAX_ANN, MTWA=ANOM_MAX_JAS, MTCO=ANOM_MAX_JFM) %>%
+`colnames<-`(c("lon", "lat", "MAT", "MTWA", "MTCO","REF"))
+ margo_max$REF = "Margo_max"
 
-data_margo_clean <- cbind(margoOut, "Margo") %>% 
-  `colnames<-`(c("lon", "lat", "SST_ann", "SST_anom_ann", "SST_anom_ann_sd", "REF"))
-write.csv(data_margo_clean, paste(dataobspath, "ocean_data/data_margo_clean.csv", sep=""), row.names=FALSE)
+# margo_bench_ready <- rbind(margo_base, margo_min, margo_max) %>% mutate(PRE = NA, MI = NA, GDD5 = NA) %>%
+#   `colnames<-`(c("lon","lat", "ocean_tas_anom", "ocean_mtco_anom", "ocean_mtwa_anom", "ocean_pre_anom", "ocean_mi_anom", "ocean_gdd5_anom", "ref"))
+ 
+ margo_tas_bench_ready <- rbind(margo_base, margo_min, margo_max) %>%
+ `colnames<-`(c("lon","lat", "ocean_tas_anom", "ocean_tas_mtco_anom", "ocean_tas_mtwa_anom", "ref"))
 
-#df <- melt(margoALL, na.rm = FALSE, id = c('LAT','LON'))
-#grid <- expand.grid(lon = lon, lat = lat)
-#grid$lat_min <- grid$lat - mean(diff(lat)) / 2
-#grid$lat_max <- grid$lat + mean(diff(lat)) / 2
-#grid$lon_min <- grid$lon - mean(diff(lon)) / 2
-#grid$lon_max <- grid$lon + mean(diff(lon)) / 2
-#grid$count_n <- NA
+ margo_tas_bench_ready <- margo_tas_bench_ready[c("lat","lon", "ocean_tas_anom", "ocean_tas_mtco_anom", "ocean_tas_mtwa_anom", "ref")]
 
-#### CREATE GRIDDED DATASETS ####
-#requirement: user-defined "data_obs_raw" function (see in functions_source.R)
-
-#BP_CL_244_wof <- obs_data_to_grid (grid, data) %>% filter (count_n >= 0) %>% 
-#  mutate (REF = "CL_wof") %>%  rbind(., BP_wof) %>% mutate (REF = as.factor (REF))
-# BP_CL_wof %>%  write.csv(., file.path(dataobspath, "BP_CL_wof.csv"),  na = "NA",  row.names = FALSE)
-
-#rm(ls="grid")
-
+margo_tas_bench_ready %>% write.csv(., file.path(dataobspath, "/ocean_data/margo_bench_ready.csv"),  na = "NA",  row.names = FALSE)
 
 ###--------------------------------------------------------------------------------
 var_ls <- c("SST_ANN", "SST_JAS", "SST_JFM", "ANOM_ANN","ANOM_JAS",	"ANOM_JFM")
@@ -49,7 +65,7 @@ num = ncol(margoALL)
 n = 3
 
 for (varname in var_ls){
-  print(paste(varname))
+  #print(paste(varname))
   n=n+1
 #---------------------
 # scatterplot
@@ -72,8 +88,8 @@ for (varname in var_ls){
   rng <- range (margoALL[n], na.rm = TRUE)
   #a range to have the same min and max for both plots
   #breakcol <- seq(from=round(rng[1]), to=round(rng[2]), length.out = 6)
-  breakcol <- c(-12, -9, -6, -3, 0, 3, 6, 9)
-  lim_colbar <- c(-12, 12)
+  breakcol <- (seq(from = -25, to = 15,length.out =10))
+  lim_colbar <- c(-25, 15)
   #lim_colbar <- c(floor(rng[1]), ceiling(rng[2]))
   
   p_map <- mp +
@@ -110,5 +126,6 @@ ncol = 3, nrow = 2)
 fig
 
 ggsave(fig,file=paste(plotpath,"MargoOceanplots/","MargoData.jpg", sep = ""),width = 11.69,height = 8.27)
+
  
 graphics.off()

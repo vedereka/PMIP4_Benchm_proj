@@ -48,10 +48,10 @@ obsraw <- obsraw %>% filter (obsraw$ref != "B", obsraw$ref != "B_min", obsraw$re
 
 # location of model output
 mod_dir <- ncpath
-mod_files <- list.files(mod_dir, full.names = TRUE)
+mod_files <- list.files(mod_dir, pattern = "anomalies", full.names = TRUE)
 
 # create list of model names for output
-mod_files_lab <- lapply(list.files(mod_dir, full.names = F), FUN = my_name_trim)
+mod_files_lab <- lapply(list.files(mod_dir, pattern = "anomalies", full.names = F), FUN = my_name_trim)
 
 # variable name in model nc files
 mod_variable_ls <- c('tas_anom', 'mtco_anom','mtwa_anom','pre_anom','gdd5_anom')
@@ -80,10 +80,11 @@ modgrid = FALSE
 
 # define source of data
 source_ls <- unique (obsraw$ref)
-  
+print(source_ls)
 ##### RUN COMPARISON -> SAVE SCORES ################################################################################
 
 for (source in source_ls) {
+  print(source)
   for (region in region_ls$reg_name) {
     
     out_filename <- paste (source, "_", region, ".csv", sep = "")
@@ -95,7 +96,8 @@ for (source in source_ls) {
       ## open stuff ## s
       mods <-
         lapply(mod_files, raster, varname = mod_varname) # for 2D netCDF files
-      
+      print(" Mods ")
+      print(mods)
       ## filter obsraw by ref and region ##
       obs <- obsraw %>% filter (ref == source)
       

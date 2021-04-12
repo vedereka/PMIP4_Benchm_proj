@@ -29,6 +29,8 @@ dataobspath <- paste(getwd(), "/input_data_obs/", sep="")
 pmip_ncpath <- paste(getwd(), "/input_pmip4_nc/", sep="")
 rdspath <- paste(getwd(), "/output_rds_temp/", sep="") 
 ncpath <- paste(getwd(), "/output_netcdf/", sep="")
+ncpath_ocean <- paste(getwd(), "/output_netcdf/ocean/", sep="")
+ncpath_Test <- paste(getwd(), "/output_netcdf/Test/", sep="")
 
 #within working directory
 plotpath <- paste(getwd(), "/output_plots/", sep="") 

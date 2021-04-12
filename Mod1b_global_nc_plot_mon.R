@@ -15,11 +15,11 @@ paste("Model metadata. Created on ", Sys.Date(), sep = '')
 
 
 #list models, variables and time-slices (months)
-#model_ls <-c('AWIESM1','AWIESM2','CCSM4-UofT','CESM1-2','CESM2-1','HadCM3-GLAC1D',
-            # 'HadCM3-ICE6GC','iLOVECLIM1-1-1-GLAC-1D','iLOVECLIM1-1-1-ICE-6G-C',
-            # 'INM-CM4-8','IPSLCM5A2','MIROC-ES2L','MPI-ESM1-2')
+model_ls <-c('AWIESM1','AWIESM2','CCSM4-UofT','CESM1-2','CESM2-1','HadCM3-GLAC1D',
+             'HadCM3-ICE6GC','iLOVECLIM1-1-1-GLAC-1D','iLOVECLIM1-1-1-ICE-6G-C',
+             'INM-CM4-8','IPSLCM5A2','MIROC-ES2L','MPI-ESM1-2')
 
-model_ls <-c('MIROC-ES2L')
+#model_ls <-c('MIROC-ES2L')
 var_ls <- c('tas', 'pr', 'clt')
 mon_ls <- seq(1,12,1)
 period_sel <- c("LGM", "PI")
@@ -133,8 +133,8 @@ period_sel <- c("LGM", "PI")
       #   colnames(sftgif) <- ncin_sftlf [["dim"]][["lat"]][["vals"]]
       # }
       
-   #We do not use a mask at all here
-      #land_mask <- sftgif * sftlf # use this to multiply it by the variable and remove global gridcells
+   #We do not use a mask at all here, but set all values to 1
+      land_mask <- (1) # use this to multiply it by the variable and remove global gridcells
       
     
 
@@ -295,9 +295,9 @@ period_sel <- c("LGM", "PI")
         dev.off()
 
         # save anomaly files that month/model/variable
-        saveRDS(m_mon_anom, file = paste(rdspath,model,"_",variab,"_anom_",mon,".RDS", sep=""))
-        saveRDS(m_mon_PI_df, file = paste(rdspath,model,"_",variab,"_PI_",mon,".RDS", sep=""))
-        saveRDS(m_mon_LGM_df, file = paste(rdspath,model,"_",variab,"_LGM_",mon,".RDS", sep=""))
+        saveRDS(m_mon_anom, file = paste(rdspath,model,"_global_",variab,"_anom_",mon,".RDS", sep=""))
+        saveRDS(m_mon_PI_df, file = paste(rdspath,model,"_global_",variab,"_PI_",mon,".RDS", sep=""))
+        saveRDS(m_mon_LGM_df, file = paste(rdspath,model,"_global_",variab,"_LGM_",mon,".RDS", sep=""))
 
         # save lat/lon values for that model (just once per model)
 
