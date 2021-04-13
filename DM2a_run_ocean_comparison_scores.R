@@ -28,24 +28,23 @@
 source(paste(getwd(),"/LGM_Benchmarking/cfg.r", sep=""))
 
 #load observations 
-obs_file <- paste (dataobspath,'ocean_data/data_margo_clean.csv',sep="")
-obsraw <- read.csv(obs_file)  
+obs_file <- paste (dataobspath,'ocean_data/margo_bench_ready.csv',sep="")
+obsraw <- read.csv(obs_file)   
 
 #obsraw$LAT <- obsraw$LAT+0.001 # I have to do this, otherwise one of the models does not work. No idea why!!?
 #obsraw$LON <- obsraw$LON+0.001
 
 
 # location of model output
-mod_dir <- ncpath
+mod_dir <- ncpath_ocean
 mod_files <- list.files(mod_dir, full.names = TRUE)
 
 # create list of model names for output
 mod_files_lab <- lapply(list.files(mod_dir, full.names = F), FUN = my_name_trim)
 
 # variable name in model nc files
-#mod_variable_ls <- c('tas_anom', 'mtco_anom','mtwa_anom','pre_anom','gdd5_anom')
-
-mod_variable_ls <- c('tas_anom', 'pre_anom')
+#mod_variable_ls <- c('ocean_tas_anom', 'ocean_mtco_anom', 'ocean_mtwa_anom')
+mod_variable_ls <- c('ocean_tas_anom')
 
 # use model grid or site locations as basis of comparison
 # (basically, Hantson et al 2020 = FALSE; Forrest et al in prep = TRUE)
@@ -61,46 +60,53 @@ modgrid = FALSE
   
   
   # #uncomment below to run all regions at once
-  region_ls <- rbind( c("global", -90,90,-180,180),c("NH", 0,90,-180,180),c("NHextratropics", 30,90,-180,180),
-         c("NTropics", 0,30,-180,180),c("NAmerica", 20,50,-140,-60),
-         c("TropicalAmericas", -30,30,-120,-35), c("WesternEurope", 35,70,-10,30),#c("TropicalAsia",8,30,60,120),
-         c("ExtratropicalAsia", 30,75,60,135), c("Africa",-35,35,-10,50)) %>%
-    as.data.frame (.) %>%
-    dplyr::rename (reg_name = V1, min_lat = V2, max_lat = V3, min_lon = V4, max_lon = V5)
+  # region_ls <- rbind( c("global", -90,90,-180,180),c("NH", 0,90,-180,180),c("NHextratropics", 30,90,-180,180),
+  #        c("NTropics", 0,30,-180,180),c("NAmerica", 20,50,-140,-60),
+  #        c("TropicalAmericas", -30,30,-120,-35), c("WesternEurope", 35,70,-10,30),#c("TropicalAsia",8,30,60,120),
+  #        c("ExtratropicalAsia", 30,75,60,135), c("Africa",-35,35,-10,50)) %>%
+  #   as.data.frame (.) %>%
+  #   dplyr::rename (reg_name = V1, min_lat = V2, max_lat = V3, min_lon = V4, max_lon = V5)
 
+
+# Removed ExtraTropical Asia from the set below, as it causes an error (no data points?) 
+region_ls <- rbind(c("global", -90,90,-180,180),c("NH", 0,90,-180,180),c("NHextratropics", 30,90,-180,180),
+                   c("NTropics", 0,30,-180,180),c("NAmerica", 20,50,-140,-60),
+                   c("TropicalAmericas", -30,30,-120,-35), c("WesternEurope", 35,70,-10,30), c("TropicalAsia",8,30,60,120), c("Africa",-35,35,-10,50)) %>%
+  as.data.frame (.) %>%
+  dplyr::rename (reg_name = V1, min_lat = V2, max_lat = V3, min_lon = V4, max_lon = V5)
 
 # define source of data
-#source_ls <- unique (obsraw$ref)
+source_ls <- unique (obsraw$ref)
   
-source_ls <- "Margo"  
+#source_ls <- "Margo"  
 ##### RUN COMPARISON -> SAVE SCORES ################################################################################
 
 for (source in source_ls) {
   for (region in region_ls$reg_name) {
     
-    out_filename <- paste (source, "_", region, ".csv", sep = "")
+    out_filename <- paste (source, "_obscsv_", region, ".csv", sep = "")
     
     for (mod_varname in mod_variable_ls) {
       ## filename with output ##
-      scores_output_filename <- paste(getwd(),"/output_scores/ocean_",mod_varname, "_NME_", out_filename, sep = "")
+      scores_output_filename <- paste(getwd(),"/output_scores/",mod_varname, "_NME_", out_filename, sep = "")
       
       ## open stuff ## s
       mods <-
         lapply(mod_files, raster, varname = mod_varname) # for 2D netCDF files
       
       ## filter obsraw by ref and region ##
-      #obs <- obsraw %>% filter (ref == source)
-      obs <- obsraw
+      obs <- obsraw %>% filter (ref == source)
+     
       obs <- obs %>% filter (lat >= region_ls %>% filter (reg_name == region) %>% dplyr::select(min_lat) %>% as.numeric() &
                              lat <= region_ls %>% filter (reg_name == region) %>% dplyr::select(max_lat) %>% as.numeric() &
                              lon >= region_ls %>% filter (reg_name == region) %>% dplyr::select(min_lon) %>% as.numeric() &
                              lon <= region_ls %>% filter (reg_name == region) %>% dplyr::select(max_lon) %>% as.numeric())
       
-      #obs <-
-        #obs[, c(1, 2, which(colnames(obs) == mod_varname))] # select relevant variable
-      print(colnames(obs))
       obs <-
-        obs[, c(1, 2, which(colnames(obs) == "SST_anom_ann"))] # select relevant variable
+        obs[, c(1, 2, which(colnames(obs) == mod_varname))] # select relevant variable
+      print(colnames(obs))
+      #obs <-
+        #obs[, c(1, 2, which(colnames(obs) == "SST_anom_ann"))] # select relevant variable
       obs <- na.omit(obs)
       
       ## save output ##

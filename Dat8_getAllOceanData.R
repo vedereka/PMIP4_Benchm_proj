@@ -46,21 +46,24 @@ names(varname_ls)  <- data_source_ls
 names(fname_ls)  <- data_source_ls
 
 for (source in data_source_ls) { 
+
   print(source)
   fname = (fname_ls[source])
   
   ncin <- nc_open(fname)
   var_name <- (varname_ls[source])
-  
+  print(var_name)
   SST <- ncvar_get(ncin, var_name)
   atts <- ncatt_get(ncin, var_name)
-  print(ncin)
+  #print(ncin)
   #print(atts)
   #print(dims)
   miss_value = ncin[["var"]][[var_name]][["missval"]]
   SST <- as.data.frame (SST) # na_if works with df
   SST <- SST %>% dplyr::na_if(miss_value)
   
+ 
+#------------------------------------  
   if(source == "Tierney") {
     lon <- "lon"
     lat <- "lat"
@@ -71,6 +74,7 @@ for (source in data_source_ls) {
     }
   
   
+  # Make it ready to plot
   if (is.null(ncin$dim$axis_3$len)) {
     targetSize <-c(ncin[["dim"]][[lon]][["len"]], ncin[["dim"]][[lat]][["len"]])#lon*lat
   } else{
@@ -92,16 +96,45 @@ for (source in data_source_ls) {
   colnames(lon_names) <- "lon_180"
   rownames(SST) <- as.array(lon_names$lon_180)
   SST <- SST[order(as.numeric(row.names(SST))),]
+  
  #-------------------------------------------
   
   # Produce output for use in benchmark code (csv)
-  #fout = paste("ocean_obs_", source, ".csv", sep="")
-  #data_obs <- rbind(lat, lon, SST) %>% 
-   # `colnames<-`(c("lat", "lon", "SST", "REF"))
+  print("Before csv write")
+  # Convert to CSV
+  fout = paste("ocean_obs_", source, ".csv", sep="")
   
-  #write.csv(SST, paste(dataobspath, "/ocean_data/SST_Masa/",fout, sep=""))
+  if(source == "Tierney") {
+    lon <- ncvar_get(ncin, "lon")
+    nlon <- dim(lon)
+    head(lon)
+    lat <- ncvar_get(ncin, "lat", verbose = F)
+    nlat <- dim(lat)
+    head(lat)
+  }
+  else {
+    lon <- ncvar_get(ncin, "longitude")
+    nlon <- dim(lon)
+    head(lon)
+    lat <- ncvar_get(ncin, "latitude", verbose = F)
+    nlat <- dim(lat)
+    head(lat)
+  }
   
   
+  r<-brick(fname)
+  nc.df <- as.data.frame(r[[1]], xy=T)
+  head(nc.df)
+  names(nc.df)<-c('longitude','latitude','temp')
+  write.csv(nc.df,paste(dataobspath, "/ocean_data/SST_Masa/",fout, sep=""))
+  
+  
+ # fout = paste("ocean_obs_", source, ".csv", sep="")
+  #data_obs <- SST_df %>% `colnames<-`(c("lat", "lon", "SST"))
+  
+  #write.csv(SST_df, paste(dataobspath, "/ocean_data/SST_Masa/",fout, sep=""))
+  
+  # Or produce it as .nc file?
   
  
   # ---------------------------------------------------------------------  
