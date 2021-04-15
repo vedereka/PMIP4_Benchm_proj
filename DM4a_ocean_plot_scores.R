@@ -56,6 +56,8 @@
 #   as.data.frame (.) %>%
 #   dplyr::rename (reg_name = V1, min_lat = V2, max_lat = V3, min_lon = V4, max_lon = V5)
 
+
+# One region removed here
 region_ls <- rbind(c("global", -90,90,-180,180),c("NH", 0,90,-180,180),c("NHextratropics", 30,90,-180,180),
                    c("NTropics", 0,30,-180,180),c("NAmerica", 20,50,-140,-60),
                    c("TropicalAmericas", -30,30,-120,-35), c("WesternEurope", 35,70,-10,30), c("TropicalAsia",8,30,60,120), c("Africa",-35,35,-10,50)) %>%
@@ -63,32 +65,41 @@ region_ls <- rbind(c("global", -90,90,-180,180),c("NH", 0,90,-180,180),c("NHextr
   dplyr::rename (reg_name = V1, min_lat = V2, max_lat = V3, min_lon = V4, max_lon = V5)
 
 
-source_ls <- c("Margo", "Margo_min", "Margo_max")
+source_ls <- c("Margo", "Margo_min", "Margo_max",  "Tierney", "Tierney_min", "Tierney_max") #"AH", "glomap", "kn")
+
+#source_ls <- c("Margo", "Margo_min", "Margo_max")
 steps = c(1, 2, 3)
 
 ##### OPEN AND MANIPULATE SCORES DATA ###########################################################
 
 for (source in source_ls) {
   for (region in region_ls$reg_name) {
+    # print(list.files(
+    #   "output_scores/Ocean",
+    #   pattern = paste ("*", source, "_", region, ".csv", sep = ""),
+    #   full.names = TRUE))
+    
     df_tbl <- #load all csv files in directory and rbind them
       list.files(
-        "output_scores/",
+        "output_scores/Ocean/",
         pattern = paste ("*", source, "_", region, ".csv", sep = ""),
         full.names = TRUE
       ) %>%
+      
       # Single model output
-        # map_df( ~ read.csv(.)) %>% `colnames<-`(
-        #     c("X1","varname","mean_null","random_null","MIROC"
-        #     )
-        #   )
-        map_df( ~ read.csv(.)) %>% `colnames<-`(
-          c(
-            "X1","varname","mean_null","random_null","AWI1","AWI2","CCSM4",
-            "CESM12","CESM21","Had-GL","Had-IC","iLOVE-GL","iLOVE-IC",
-            "INM","IPSL","MIROC","MPI"
-          )
+      # map_df( ~ read.csv(.)) %>% `colnames<-`(
+      #     c("X1","varname","mean_null","random_null","MIROC"
+      #     )
+      #   )
+      
+      map_df( ~ read.csv(.)) %>% `colnames<-`(
+        c(
+          "X1","varname","mean_null","random_null","AWI1","AWI2","CCSM4",
+          "CESM12","CESM21","Had-GL","Had-IC","iLOVE-GL","iLOVE-IC",
+          "INM","IPSL","MIROC","MPI"
         )
-
+      )
+    
     # choose step and prepare data
     for (st in steps) {
       #process data
@@ -96,7 +107,7 @@ for (source in source_ls) {
       df <- df %>% filter (df$X1 == paste("step", st, sep = ""))
       df_data <- as.data.frame(df[, 5:ncol(df)])
       #df_data <- df[, 5:ncol(df)]
-      print(unique(df$varname))
+      #print(unique(df$varname))
       rownames(df_data) <- lapply(unique(df$varname), FUN = trim_mode_name)
       df$varname <- lapply(df$varname, FUN = trim_mode_name)
       
@@ -150,36 +161,40 @@ for (source in source_ls) {
     }
     
     data <- join(
-        data,
-        df_mod,
-        by = c("var", "step") ,
-        type = "left",
-        match = "all"
-      )
+      data,
+      df_mod,
+      by = c("var", "step") ,
+      type = "left",
+      match = "all"
+    )
     assign(paste("data", source, region, sep = "_"), data)
-    
+    #print(paste("data", source, region, sep = "_"))
   }
 }
 
-
 #rm(list=ls(pattern="^df")) # clean environment
-#refs_ls <- c("Margo", )
 
 ##### ASSIGN COLOURS FOR EACH SCORE (see plot legend) ################################################################################
 
-refs <- "Margo" # min/max already used. 
+refs_ls <- c("Margo", "Tierney") 
+#, "AH", "glomap", "kn") # min/max already used. 
 
-#for (refs in refs_ls) {} # loop needed if more than one source (ie B and CL)
+#refs <- "Margo"
+for (refs in refs_ls) { # loop needed if more than one source (ie B and CL)
+  #print(refs)
+  
   for (region in region_ls$reg_name) {
+    print(region)
+    #print(paste ("data", refs, "max", region, sep = "_"))
     data <- join(
       get(paste ("data", refs, "max", region, sep = "_")) %>% dplyr::select (var, model, step, score_max),
       get(paste ("data", refs, "min", region, sep = "_")) %>% dplyr::select (var, model, step, score_min),
       by = c("var", "model", "step") ,type = "left",match = "all") %>%
       join (., get(paste ("data", refs, region, sep = "_")) %>% dplyr::select (var, model, step, mean_raw, rand_raw, score_raw),
-        by = c("var", "model", "step") ,
-        type = "left",match = "all") %>%
+            by = c("var", "model", "step") ,
+            type = "left",match = "all") %>%
       mutate (min = pmin(score_max, score_raw, score_min),
-        max = pmax(score_max, score_raw, score_min)) %>%
+              max = pmax(score_max, score_raw, score_min)) %>%
       dplyr::select (var, model, step, mean_raw, rand_raw, score_raw, min, max) %>%
       dplyr::rename (mean_null = mean_raw,
                      rand_null = rand_raw,
@@ -235,98 +250,100 @@ refs <- "Margo" # min/max already used.
     
     assign(paste ("df", refs, region, sep = "_"), data)
   }
-
-
-rm(ls="st", "source", "region")
-
-variab_ls <- as.character(unique(data$var))
-model_ls <- as.character(unique (data$model))
-                  
-rm(list=ls(pattern="^data")) # clean environment
-
-##### APPLY SIGNIFICANCE TO THE COLOURING,  CREATE AND SAVE PLOT  ##############
-# choose wich scores to colour and scores to remain white acc to significance
-
-#for (refs in refs_ls){} # loop needed only if more than one source (ie B and CL)
-
-for (region in region_ls$reg_name) {
-  data <- get (paste ("df", refs, region, sep = "_"))
-  data[which(data$sig == FALSE), "sig"] <- 999
-  data[which(data$sig == 1), "sig"] <- 0
-  data[which(data$sig == 999), "sig"] <- 1
-  data$sig <- as.logical (data$sig)
   
-  filename_output_jpeg <-
-    paste (plotpath,"DM_scores/", refs, "_", region, "_scores_plot.jpg", sep = "")
   
-  for (mod in model_ls) {
-    for (variab in variab_ls) {
-      x <- data[which(data$var == variab & data$model == mod),]
-      
-      # 1a. signif change in scores from st2 to st3
-      if (x[which(x$step == 3), "sig"]) {
-        # different category towards better -> pass1 = TRUE
-        if (x[which(x$step == 3), "z_val"] >= x[which(x$step == 2), "z_val"]) {
-          # remove colour for scores not changing categ significantly
-          data[which(data$var == variab &
-                       data$model == mod &
-                       data$step == 3), "z_val"] <- 5
+  rm(ls="st", "source", "region")
+  
+  variab_ls <- as.character(unique(data$var))
+  model_ls <- as.character(unique (data$model))
+  
+ # rm(list=ls(pattern="^data")) # clean environment
+  #}
+  
+  ##### APPLY SIGNIFICANCE TO THE COLOURING,  CREATE AND SAVE PLOT  ##############
+  # choose wich scores to colour and scores to remain white acc to significance
+  
+  #for (refs in refs_ls){ # loop needed only if more than one source (ie B and CL)
+  
+  for (region in region_ls$reg_name) {
+    data <- get (paste ("df", refs, region, sep = "_"))
+    data[which(data$sig == FALSE), "sig"] <- 999
+    data[which(data$sig == 1), "sig"] <- 0
+    data[which(data$sig == 999), "sig"] <- 1
+    data$sig <- as.logical (data$sig)
+    
+    filename_output_jpeg <-
+      paste (plotpath,"DM_scores/", refs, "_", region, "_scores_plot.jpg", sep = "")
+    
+    for (mod in model_ls) {
+      for (variab in variab_ls) {
+        x <- data[which(data$var == variab & data$model == mod),]
+        
+        # 1a. signif change in scores from st2 to st3
+        if (x[which(x$step == 3), "sig"]) {
+          # different category towards better -> pass1 = TRUE
+          if (x[which(x$step == 3), "z_val"] >= x[which(x$step == 2), "z_val"]) {
+            # remove colour for scores not changing categ significantly
+            data[which(data$var == variab &
+                         data$model == mod &
+                         data$step == 3), "z_val"] <- 5
+          }
         }
-      }
-      
-      # 1b. signif change in scores from st1 to st2
-      if (x[which(x$step == 2), "sig"]) {
-        # different category towards better -> pass1 = TRUE
-        if (x[which(x$step == 2), "z_val"] >= x[which(x$step == 1), "z_val"]) {
-          # remove colour for scores not changing categ significantly
+        
+        # 1b. signif change in scores from st1 to st2
+        if (x[which(x$step == 2), "sig"]) {
+          # different category towards better -> pass1 = TRUE
+          if (x[which(x$step == 2), "z_val"] >= x[which(x$step == 1), "z_val"]) {
+            # remove colour for scores not changing categ significantly
+            data[which(data$var == variab &
+                         data$model == mod &
+                         data$step == 2), "z_val"] <- 5
+          }
+        }
+        
+        # 2.No significant change from st1 to st2
+        if (x[which(x$step == 2), "sig"] == FALSE) {
+          # -> convert z_val in step 2 to NA
           data[which(data$var == variab &
                        data$model == mod &
                        data$step == 2), "z_val"] <- 5
         }
+        
+        # 3.No significant change from st2 to st3
+        if (x[which(x$step == 3), "sig"] == FALSE) {
+          # -> convert z_val in step 2 to NA
+          data[which(data$var == variab &
+                       data$model == mod &
+                       data$step == 3), "z_val"] <- 5
+        }
+        
+        rm ("x")
       }
-      
-      # 2.No significant change from st1 to st2
-      if (x[which(x$step == 2), "sig"] == FALSE) {
-        # -> convert z_val in step 2 to NA
-        data[which(data$var == variab &
-                     data$model == mod &
-                     data$step == 2), "z_val"] <- 5
-      }
-      
-      # 3.No significant change from st2 to st3
-      if (x[which(x$step == 3), "sig"] == FALSE) {
-        # -> convert z_val in step 2 to NA
-        data[which(data$var == variab &
-                     data$model == mod &
-                     data$step == 3), "z_val"] <- 5
-      }
-      
-      rm ("x")
     }
+    #here whe have a data file with NA in z_val for changes that are not significant
+    # matrixplot is a function in functions_source.R
+    
+    fig <- ggarrange (
+      matrixplot(1) + rremove("x.text"),
+      matrixplot(2) + rremove("x.text"),
+      matrixplot(3),
+      ncol = 1,
+      common.legend = TRUE,
+      legend = "top"
+    )
+    
+    fig <- annotate_figure(fig,
+                           top = text_grob(
+                             paste ("Target: ", refs, ". Region: ", region, sep = ""),
+                             color = "black",
+                             face = "bold",
+                             size = 16
+                           ))
+    ggsave(fig,
+           file = filename_output_jpeg,
+           width = 12,
+           height = 13)
   }
-  #here whe have a data file with NA in z_val for changes that are not significant
-  # matrixplot is a function in functions_source.R
-  
-  fig <- ggarrange (
-    matrixplot(1) + rremove("x.text"),
-    matrixplot(2) + rremove("x.text"),
-    matrixplot(3),
-    ncol = 1,
-    common.legend = TRUE,
-    legend = "top"
-  )
-  
-  fig <- annotate_figure(fig,
-                         top = text_grob(
-                           paste ("Target: ", refs, ". Region: ", region, sep = ""),
-                           color = "black",
-                           face = "bold",
-                           size = 16
-                         ))
-  ggsave(fig,
-         file = filename_output_jpeg,
-         width = 12,
-         height = 13)
   
 }
 

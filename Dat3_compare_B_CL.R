@@ -29,7 +29,7 @@ data_obs_raw <- rbind(bart_wf, bart_wof, clea_all, prent_all) %>%
 
 rm(ls="bart_wf", "bart_wof", "prent_all")
 
-#### SELECT OVERLAPPING SITES BETWEEN BARTLEIN GRIDS AND CLEATOR #### 
+### SELECT OVERLAPPING SITES BETWEEN BARTLEIN GRIDS AND CLEATOR ####
 
 # 1. load gridcells from Bartlein's gridded data
 # 2. identify how many Bart sites are in each gridcell

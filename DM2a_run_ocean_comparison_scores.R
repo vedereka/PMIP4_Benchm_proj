@@ -28,8 +28,19 @@
 source(paste(getwd(),"/LGM_Benchmarking/cfg.r", sep=""))
 
 #load observations 
+#obs_file <- paste (dataobspath,'ocean_data/SST_Masa/ocean_obs_Margo.csv',sep="")
 obs_file <- paste (dataobspath,'ocean_data/margo_bench_ready.csv',sep="")
 obsraw <- read.csv(obs_file)   
+
+#modify ref names (to short comb)
+obsraw <- obsraw %>% mutate(ref = ifelse(ref == "Margo_min" , "Margo_min",
+                                         ifelse( ref == "Margo_max", "Margo_max",
+                                                 ifelse(ref == "Margo", "Margo",
+                                                        #ifelse( ref == "prentice", "P", 
+                                                               # ifelse( ref == "cleator_min", "CL_min",
+                                                                        #ifelse(ref == "cleator_max", "CL_max",
+                                                                              # ifelse(ref == "cleator", "CL",
+                                                        "other"))))
 
 #obsraw$LAT <- obsraw$LAT+0.001 # I have to do this, otherwise one of the models does not work. No idea why!!?
 #obsraw$LON <- obsraw$LON+0.001
@@ -77,18 +88,17 @@ region_ls <- rbind(c("global", -90,90,-180,180),c("NH", 0,90,-180,180),c("NHextr
 
 # define source of data
 source_ls <- unique (obsraw$ref)
-  
-#source_ls <- "Margo"  
+
 ##### RUN COMPARISON -> SAVE SCORES ################################################################################
 
 for (source in source_ls) {
   for (region in region_ls$reg_name) {
     
-    out_filename <- paste (source, "_obscsv_", region, ".csv", sep = "")
+    out_filename <- paste (source, "_", region, ".csv", sep = "")
     
     for (mod_varname in mod_variable_ls) {
       ## filename with output ##
-      scores_output_filename <- paste(getwd(),"/output_scores/",mod_varname, "_NME_", out_filename, sep = "")
+      scores_output_filename <- paste(getwd(),"/output_scores/Ocean/",mod_varname, "_NME_", out_filename, sep = "")
       
       ## open stuff ## s
       mods <-
