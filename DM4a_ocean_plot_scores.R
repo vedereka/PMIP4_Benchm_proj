@@ -168,7 +168,6 @@ for (source in source_ls) {
       match = "all"
     )
     assign(paste("data", source, region, sep = "_"), data)
-    #print(paste("data", source, region, sep = "_"))
   }
 }
 
@@ -179,171 +178,171 @@ for (source in source_ls) {
 refs_ls <- c("Margo", "Tierney") 
 #, "AH", "glomap", "kn") # min/max already used. 
 
-#refs <- "Margo"
-for (refs in refs_ls) { # loop needed if more than one source (ie B and CL)
-  #print(refs)
+refs <- "Margo"
+#for (refs in refs_ls) { # loop needed if more than one source (ie B and CL)
+print(refs)
+
+for (region in region_ls$reg_name) {
+  print(region)
+  #print(paste ("data", refs, "max", region, sep = "_"))
+  data <- join(
+    get(paste ("data", refs, "max", region, sep = "_")) %>% dplyr::select (var, model, step, score_max),
+    get(paste ("data", refs, "min", region, sep = "_")) %>% dplyr::select (var, model, step, score_min),
+    by = c("var", "model", "step") ,type = "left",match = "all") %>%
+    join (., get(paste ("data", refs, region, sep = "_")) %>% dplyr::select (var, model, step, mean_raw, rand_raw, score_raw),
+          by = c("var", "model", "step") ,
+          type = "left",match = "all") %>%
+    mutate (min = pmin(score_max, score_raw, score_min),
+            max = pmax(score_max, score_raw, score_min)) %>%
+    dplyr::select (var, model, step, mean_raw, rand_raw, score_raw, min, max) %>%
+    dplyr::rename (mean_null = mean_raw,
+                   rand_null = rand_raw,
+                   val = score_raw) %>%
+    mutate (z_val = NA,z_min = NA,z_max = NA)
   
-  for (region in region_ls$reg_name) {
-    print(region)
-    #print(paste ("data", refs, "max", region, sep = "_"))
-    data <- join(
-      get(paste ("data", refs, "max", region, sep = "_")) %>% dplyr::select (var, model, step, score_max),
-      get(paste ("data", refs, "min", region, sep = "_")) %>% dplyr::select (var, model, step, score_min),
-      by = c("var", "model", "step") ,type = "left",match = "all") %>%
-      join (., get(paste ("data", refs, region, sep = "_")) %>% dplyr::select (var, model, step, mean_raw, rand_raw, score_raw),
-            by = c("var", "model", "step") ,
-            type = "left",match = "all") %>%
-      mutate (min = pmin(score_max, score_raw, score_min),
-              max = pmax(score_max, score_raw, score_min)) %>%
-      dplyr::select (var, model, step, mean_raw, rand_raw, score_raw, min, max) %>%
-      dplyr::rename (mean_null = mean_raw,
-                     rand_null = rand_raw,
-                     val = score_raw) %>%
-      mutate (z_val = NA,z_min = NA,z_max = NA)
+  #assign values for colours
+  for (k in 1:dim(data)[1]) {
+    rand <- data$rand_null[k]
+    mn <- data$mean_null[k]
+    y <- data[k, (ncol(data) - 5):(ncol(data) - 3)]
+    x <- data[k, (ncol(data) - 2):ncol(data)]
     
-    #assign values for colours
-    for (k in 1:dim(data)[1]) {
-      rand <- data$rand_null[k]
-      mn <- data$mean_null[k]
-      y <- data[k, (ncol(data) - 5):(ncol(data) - 3)]
-      x <- data[k, (ncol(data) - 2):ncol(data)]
-      
-      # x [(condition == TRUE),] <- 1
-      x [, ((y <= mn - ((25 / 100) * mn)) == TRUE)] <- 1
-      x [, ((y > mn - ((25 / 100) * mn) & y <= mn) == TRUE)] <- 2
-      x [, ((y > mn & y < rand) == TRUE)] <- 3
-      x [, ((y >= rand) == TRUE)] <- 4
-      
-      data[k, (ncol(data) - 2):ncol(data)] <- x
-    }
+    # x [(condition == TRUE),] <- 1
+    x [, ((y <= mn - ((25 / 100) * mn)) == TRUE)] <- 1
+    x [, ((y > mn - ((25 / 100) * mn) & y <= mn) == TRUE)] <- 2
+    x [, ((y > mn & y < rand) == TRUE)] <- 3
+    x [, ((y >= rand) == TRUE)] <- 4
     
-    rm(ls="x","y", "mn", "k", "rand")
-    
-    # are ranges overlappin -> not significant???? if so, convert z back to NA
-    # Use DescTools::Overlap
-    # steps are cumulative (1 to 2 and then 2 to 3)
-    
-    data <- data %>% mutate (sig = NA)
-    for (k in 1:dim(data)[1]) {
-      if (data[k, "step"] == 1) {
-        int2 <-
-          data %>% filter (step == 2, var == data[k, "var"], model == data[k, "model"])
-        
-        data[which(data$step == 2)[which(data$step == 2) %in% which(data$var == data[k, "var"] &
-                                                                      data$model == data[k, "model"])], "sig"] <-
-          c(data[k, "min"], data[k, "max"]) %overlaps% c(int2[, "min"], int2[, "max"])
-        
-        rm(ls = "int2")
-        
-      } else if (data[k, "step"] == 2) {
-        int3 <-
-          data %>% filter (step == 3, var == data[k, "var"], model == data[k, "model"])
-        data[which(data$step == 3)[which(data$step == 3) %in% which(data$var == data[k, "var"] &
-                                                                      data$model == data[k, "model"])], "sig"] <-
-          c(data[k, "min"], data[k, "max"]) %overlaps% c(int3[, "min"], int3[, "max"])
-        
-        rm(ls = "int3")
-      }
-    }
-    
-    rm(ls="k")
-    
-    assign(paste ("df", refs, region, sep = "_"), data)
+    data[k, (ncol(data) - 2):ncol(data)] <- x
   }
   
+  rm(ls="x","y", "mn", "k", "rand")
   
-  rm(ls="st", "source", "region")
+  # are ranges overlappin -> not significant???? if so, convert z back to NA
+  # Use DescTools::Overlap
+  # steps are cumulative (1 to 2 and then 2 to 3)
   
-  variab_ls <- as.character(unique(data$var))
-  model_ls <- as.character(unique (data$model))
+  data <- data %>% mutate (sig = NA)
+  for (k in 1:dim(data)[1]) {
+    if (data[k, "step"] == 1) {
+      int2 <-
+        data %>% filter (step == 2, var == data[k, "var"], model == data[k, "model"])
+      
+      data[which(data$step == 2)[which(data$step == 2) %in% which(data$var == data[k, "var"] &
+                                                                    data$model == data[k, "model"])], "sig"] <-
+        c(data[k, "min"], data[k, "max"]) %overlaps% c(int2[, "min"], int2[, "max"])
+      
+      rm(ls = "int2")
+      
+    } else if (data[k, "step"] == 2) {
+      int3 <-
+        data %>% filter (step == 3, var == data[k, "var"], model == data[k, "model"])
+      data[which(data$step == 3)[which(data$step == 3) %in% which(data$var == data[k, "var"] &
+                                                                    data$model == data[k, "model"])], "sig"] <-
+        c(data[k, "min"], data[k, "max"]) %overlaps% c(int3[, "min"], int3[, "max"])
+      
+      rm(ls = "int3")
+    }
+  }
   
- # rm(list=ls(pattern="^data")) # clean environment
-  #}
+  rm(ls="k")
   
-  ##### APPLY SIGNIFICANCE TO THE COLOURING,  CREATE AND SAVE PLOT  ##############
-  # choose wich scores to colour and scores to remain white acc to significance
+  assign(paste ("df", refs, region, sep = "_"), data)
+}
+
+
+rm(ls="st", "source", "region")
+
+variab_ls <- as.character(unique(data$var))
+model_ls <- as.character(unique (data$model))
+
+# rm(list=ls(pattern="^data")) # clean environment
+#}
+
+##### APPLY SIGNIFICANCE TO THE COLOURING,  CREATE AND SAVE PLOT  ##############
+# choose wich scores to colour and scores to remain white acc to significance
+
+#for (refs in refs_ls){ # loop needed only if more than one source (ie B and CL)
+
+for (region in region_ls$reg_name) {
+  data <- get (paste ("df", refs, region, sep = "_"))
+  data[which(data$sig == FALSE), "sig"] <- 999
+  data[which(data$sig == 1), "sig"] <- 0
+  data[which(data$sig == 999), "sig"] <- 1
+  data$sig <- as.logical (data$sig)
   
-  #for (refs in refs_ls){ # loop needed only if more than one source (ie B and CL)
+  filename_output_jpeg <-
+    paste (plotpath,"DM_scores/", refs, "_", region, "_scores_plot.jpg", sep = "")
   
-  for (region in region_ls$reg_name) {
-    data <- get (paste ("df", refs, region, sep = "_"))
-    data[which(data$sig == FALSE), "sig"] <- 999
-    data[which(data$sig == 1), "sig"] <- 0
-    data[which(data$sig == 999), "sig"] <- 1
-    data$sig <- as.logical (data$sig)
-    
-    filename_output_jpeg <-
-      paste (plotpath,"DM_scores/", refs, "_", region, "_scores_plot.jpg", sep = "")
-    
-    for (mod in model_ls) {
-      for (variab in variab_ls) {
-        x <- data[which(data$var == variab & data$model == mod),]
-        
-        # 1a. signif change in scores from st2 to st3
-        if (x[which(x$step == 3), "sig"]) {
-          # different category towards better -> pass1 = TRUE
-          if (x[which(x$step == 3), "z_val"] >= x[which(x$step == 2), "z_val"]) {
-            # remove colour for scores not changing categ significantly
-            data[which(data$var == variab &
-                         data$model == mod &
-                         data$step == 3), "z_val"] <- 5
-          }
-        }
-        
-        # 1b. signif change in scores from st1 to st2
-        if (x[which(x$step == 2), "sig"]) {
-          # different category towards better -> pass1 = TRUE
-          if (x[which(x$step == 2), "z_val"] >= x[which(x$step == 1), "z_val"]) {
-            # remove colour for scores not changing categ significantly
-            data[which(data$var == variab &
-                         data$model == mod &
-                         data$step == 2), "z_val"] <- 5
-          }
-        }
-        
-        # 2.No significant change from st1 to st2
-        if (x[which(x$step == 2), "sig"] == FALSE) {
-          # -> convert z_val in step 2 to NA
-          data[which(data$var == variab &
-                       data$model == mod &
-                       data$step == 2), "z_val"] <- 5
-        }
-        
-        # 3.No significant change from st2 to st3
-        if (x[which(x$step == 3), "sig"] == FALSE) {
-          # -> convert z_val in step 2 to NA
+  for (mod in model_ls) {
+    for (variab in variab_ls) {
+      x <- data[which(data$var == variab & data$model == mod),]
+      
+      # 1a. signif change in scores from st2 to st3
+      if (x[which(x$step == 3), "sig"]) {
+        # different category towards better -> pass1 = TRUE
+        if (x[which(x$step == 3), "z_val"] >= x[which(x$step == 2), "z_val"]) {
+          # remove colour for scores not changing categ significantly
           data[which(data$var == variab &
                        data$model == mod &
                        data$step == 3), "z_val"] <- 5
         }
-        
-        rm ("x")
       }
+      
+      # 1b. signif change in scores from st1 to st2
+      if (x[which(x$step == 2), "sig"]) {
+        # different category towards better -> pass1 = TRUE
+        if (x[which(x$step == 2), "z_val"] >= x[which(x$step == 1), "z_val"]) {
+          # remove colour for scores not changing categ significantly
+          data[which(data$var == variab &
+                       data$model == mod &
+                       data$step == 2), "z_val"] <- 5
+        }
+      }
+      
+      # 2.No significant change from st1 to st2
+      if (x[which(x$step == 2), "sig"] == FALSE) {
+        # -> convert z_val in step 2 to NA
+        data[which(data$var == variab &
+                     data$model == mod &
+                     data$step == 2), "z_val"] <- 5
+      }
+      
+      # 3.No significant change from st2 to st3
+      if (x[which(x$step == 3), "sig"] == FALSE) {
+        # -> convert z_val in step 2 to NA
+        data[which(data$var == variab &
+                     data$model == mod &
+                     data$step == 3), "z_val"] <- 5
+      }
+      
+      rm ("x")
     }
-    #here whe have a data file with NA in z_val for changes that are not significant
-    # matrixplot is a function in functions_source.R
-    
-    fig <- ggarrange (
-      matrixplot(1) + rremove("x.text"),
-      matrixplot(2) + rremove("x.text"),
-      matrixplot(3),
-      ncol = 1,
-      common.legend = TRUE,
-      legend = "top"
-    )
-    
-    fig <- annotate_figure(fig,
-                           top = text_grob(
-                             paste ("Target: ", refs, ". Region: ", region, sep = ""),
-                             color = "black",
-                             face = "bold",
-                             size = 16
-                           ))
-    ggsave(fig,
-           file = filename_output_jpeg,
-           width = 12,
-           height = 13)
   }
+  #here whe have a data file with NA in z_val for changes that are not significant
+  # matrixplot is a function in functions_source.R
+  
+  fig <- ggarrange (
+    matrixplot(1) + rremove("x.text"),
+    matrixplot(2) + rremove("x.text"),
+    matrixplot(3),
+    ncol = 1,
+    common.legend = TRUE,
+    legend = "top"
+  )
+  
+  fig <- annotate_figure(fig,
+                         top = text_grob(
+                           paste ("Target: ", refs, ". Region: ", region, sep = ""),
+                           color = "black",
+                           face = "bold",
+                           size = 16
+                         ))
+  ggsave(fig,
+         file = filename_output_jpeg,
+         width = 12,
+         height = 13)
+  # }
   
 }
 
