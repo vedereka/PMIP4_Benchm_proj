@@ -28,19 +28,33 @@
 source(paste(getwd(),"/LGM_Benchmarking/cfg.r", sep=""))
 
 #load observations 
-obs_file <- paste (dataobspath,'ocean_data/SST_Masa/ocean_obs_Margo.csv',sep="")
+#obs_file <- paste (dataobspath,'ocean_data/SST_Masa/ocean_obs_Margo.csv',sep="")
 #obs_file <- paste (dataobspath,'ocean_data/SST_Masa/ocean_obs_Tierney.csv',sep="")
+#obs_file <- paste (dataobspath,'ocean_data/SST_Masa/ocean_obs_AH.csv',sep="")
+#obs_file <- paste (dataobspath,'ocean_data/SST_Masa/ocean_obs_glomap.csv',sep="")
+obs_file <- paste (dataobspath,'ocean_data/SST_Masa/ocean_obs_kn.csv',sep="")
 
 obsraw <- read.csv(obs_file)   
 
 #modify ref names (to short comb)
-obsraw <- obsraw %>% mutate(ref = ifelse(ref == "Margo_min" , "M_min",
-                                         ifelse( ref == "Margo_max", "M_max",
-                                                 ifelse(ref == "Margo", "M",
-                                                       ifelse( ref == "Tierney_min", "Tierney_min",
-                                                      ifelse(ref == "Tierney_max", "Tierney_max",
-                                                      ifelse(ref == "Tierney", "Tierney",
-                                                        "other")))))))
+obsraw <- obsraw %>% mutate(ref = case_when(
+  ref == "Margo_min" ~ "M_min",
+  ref == "Margo_max" ~ "M_max",
+  ref == "Margo" ~ "M",
+  ref == "Tierney_min" ~ "Tierney_min",
+  ref == "Tierney_max" ~ "Tierney_max",
+  ref == "Tierney"~ "Tierney",
+  ref == "AH_min"~ "AH_min",
+  ref == "AH_max" ~ "AH_max",
+  ref == "AH" ~ "AH",
+  ref == "glomap" ~ "glomap",
+  ref == "glomap_min" ~ "glomap_min",
+  ref == "glomap_max" ~ "glomap_max",
+  ref == "kn" ~ "kn",                                                                        ref == "kn_min" ~ "kn_min",
+  ref == "kn_max" ~ "kn_max",
+  ref == 'other' ~ 'other'
+))
+
 
 #obsraw$LAT <- obsraw$LAT+0.001 # I have to do this, otherwise one of the models does not work. No idea why!!?
 #obsraw$LON <- obsraw$LON+0.001
@@ -130,7 +144,7 @@ for (source in source_ls) {
       ## compare ##
       scores = sapply(mods, makeComparison)
       null_scores = summary(null.NME(obs[, 3]))
-      
+      #print(null_scores)
       ## output ##
       out = cbind(mod_varname, null_scores[1], null_scores[2], scores)
       colnames(out) = c("varname", "mean_null", "random_null", mod_files_lab)

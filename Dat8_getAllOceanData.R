@@ -106,7 +106,7 @@ for (source in data_source_ls) {
   r<-brick(fname, varname=var_name)
   nc.df <- as.data.frame(r[[1]], xy=T) %>% mutate(ref = source) %>% `colnames<-`(c('lon','lat','ocean_tas_anom', 'ref'))
   
-
+  
   # lons should all be from -180 to 180. They need revision if 0-360.
   if (max(nc.df['lon'] > 181)) {
     index <- nc.df['lon'] > 180; nc.df['lon'][index] <- nc.df['lon'][index] - 360 
@@ -115,7 +115,7 @@ for (source in data_source_ls) {
   # Swap order of lat and lon
   nc.df <- nc.df[c("lat","lon", "ocean_tas_anom", "ref")]
   head(nc.df)
- 
+  
   print("Before max and min")
   
   ######## Get values for Margo min and max #######
@@ -129,10 +129,10 @@ for (source in data_source_ls) {
     if (max(nc_max.df['lon'] > 181)) {
       index <- nc_max.df['lon'] > 180; nc_max.df['lon'][index] <- nc_max.df['lon'][index] - 360 
     }
-   # nc_max.df <- nc_max.df[order(nc_max.df$lon),]
+    # nc_max.df <- nc_max.df[order(nc_max.df$lon),]
     nc_max.df <- nc_max.df[c("lat","lon", "ocean_tas_anom","ref")]
     
-       
+    
     r_min <- brick(fname, varname="lgmanomannmin")
     refmin = "Margo_min"
     nc_min.df <- as.data.frame(r_min[[1]], xy=T) %>% mutate(ref = refmin) %>% `colnames<-`(c('lon','lat','ocean_tas_anom', 'ref'))
@@ -148,73 +148,74 @@ for (source in data_source_ls) {
     
     nc_min.df$ocean_tas_anom[nc_min.df$ocean_tas_anom == nc.df$ocean_tas_anom] <- NA 
     nc_max.df$ocean_tas_anom[nc_max.df$ocean_tas_anom == nc.df$ocean_tas_anom] <- NA
-    
-    
-    nc.df <- rbind(nc.df, nc_min.df, nc_max.df) %>%
-      `colnames<-`(c("lat","lon", "ocean_tas_anom", "ref"))
   } 
-  
   #----------------------------------------------------------------
   ###### Fix values for Tierney min and max (use std) #######
-  if (source == "Tierney") {
-    print("Tierney max and min")
-    r_std <- brick(fname, varname="std")
-    refstd = "std"
-    nc_std.df <- as.data.frame(r_std[[1]], xy=T) %>% mutate(ref = refstd) %>% `colnames<-`(c('lon','lat','ocean_tas_anom_std', 'ref'))
-    nc_std.df <- nc_std.df[c("lat","lon", "ocean_tas_anom_std","ref")]
+  else if (source == "Tierney") {
+      print("Tierney max and min")
+      r_std <- brick(fname, varname="std")
+      refstd = "std"
+      nc_std.df <- as.data.frame(r_std[[1]], xy=T) %>% mutate(ref = refstd) %>% `colnames<-`(c('lon','lat','ocean_tas_anom_std', 'ref'))
+      nc_std.df <- nc_std.df[c("lat","lon", "ocean_tas_anom_std","ref")]
+      
+      # if nc_std.df == 0 set max and min to NA
+      nc_min.df <- nc_std.df %>% mutate(ref = "Tierney_min", ocean_tas_anom_std = nc.df$ocean_tas_anom - nc_std.df$ocean_tas_anom_std) %>%
+        dplyr::rename (ocean_tas_anom = ocean_tas_anom_std)
+      
+      nc_max.df <- nc_std.df %>% mutate(ref = "Tierney_max", ocean_tas_anom_std = nc.df$ocean_tas_anom + nc_std.df$ocean_tas_anom_std) %>%
+        dplyr::rename (ocean_tas_anom = ocean_tas_anom_std)
+      
+      
+    } 
+    #----------------------------------------------------------
+    # Default min and max values to standard where they are not available, and add to file so plot works properly
+    else {
+      refVal = paste(source, "_min", sep = "")
+      nc_min.df <- nc.df %>% mutate(ref = refVal) %>% `colnames<-`(c('lat','lon','ocean_tas_anom', 'ref'))
+      refVal = paste(source, "_max", sep = "")
+      nc_max.df <- nc.df %>% mutate(ref = refVal) %>% `colnames<-`(c('lat','lon','ocean_tas_anom', 'ref'))
+      
+    }
+    #---------------------------------------------------------------------
+    nc.df <- rbind(nc.df, nc_min.df, nc_max.df) %>%
+    `colnames<-`(c("lat","lon", "ocean_tas_anom", "ref"))
     
-   # if nc_std.df == 0 set max and min to NA
-    nc_min.df <- nc_std.df %>% mutate(ref = "Tierney_min", ocean_tas_anom_std = nc.df$ocean_tas_anom - nc_std.df$ocean_tas_anom_std) %>%
-    dplyr::rename (ocean_tas_anom = ocean_tas_anom_std)
+    write.csv(nc.df,row.names=FALSE, paste(dataobspath, "/ocean_data/SST_Masa/",fout, sep=""))
     
-    nc_max.df <- nc_std.df %>% mutate(ref = "Tierney_max", ocean_tas_anom_std = nc.df$ocean_tas_anom + nc_std.df$ocean_tas_anom_std) %>%
-      dplyr::rename (ocean_tas_anom = ocean_tas_anom_std)
     
-    nc.df <- rbind(nc.df, nc_min.df, nc_max.df)
+    # ---------------------------------------------------------------------  
+    #print("Mapping plots")
+    # MAP 1: ANOMALIES
     
-  } 
- #----------------------------------------------------------
+    cols <- (rev(brewer.pal(11, "RdBu")))
+    varunits <- "K"
+    
+    cairo_pdf(
+      paste(plotpath, 'oceanplots/MasaData/', source, '_SST.pdf', sep = ""),width = 11.69,
+      height = 8.27, onefile = T)
+    
+    var_title <-paste(source, "SST anomaly",sep = "")
+    
+    #colbreaks
+    colbreaks <- c(seq(from = -10, to = 2, length.out = 11))
+    #colbreaks <- c(seq(from = min(SST, na.rm = TRUE),to = max(SST, na.rm = TRUE),length.out = 11
+    #))
+    
+    p <- plot_mtco_eg_disc(
+      mat_withlatlon = SST,
+      cols = cols,
+      brkpnt = colbreaks,
+      title_name = var_title,
+      varunits = varunits,
+      shapefile_df = shapefile_df_180
+    )
+    print(p)
+    dev.off()
+    
+    nc_close(ncin)
+    
+  }  
   
- 
-  #---------------------------------------------------------------------
   
-  
-  write.csv(nc.df,row.names=FALSE, paste(dataobspath, "/ocean_data/SST_Masa/",fout, sep=""))
-  
-  
-  # ---------------------------------------------------------------------  
-  #print("Mapping plots")
-  # MAP 1: ANOMALIES
-  
-  cols <- (rev(brewer.pal(11, "RdBu")))
-  varunits <- "K"
-  
-  cairo_pdf(
-    paste(plotpath, 'oceanplots/MasaData/', source, '_SST.pdf', sep = ""),width = 11.69,
-    height = 8.27, onefile = T)
-  
-  var_title <-paste(source, "SST anomaly",sep = "")
-  
-  #colbreaks
-  colbreaks <- c(seq(from = -10, to = 2, length.out = 11))
-  #colbreaks <- c(seq(from = min(SST, na.rm = TRUE),to = max(SST, na.rm = TRUE),length.out = 11
-  #))
-  
-  p <- plot_mtco_eg_disc(
-    mat_withlatlon = SST,
-    cols = cols,
-    brkpnt = colbreaks,
-    title_name = var_title,
-    varunits = varunits,
-    shapefile_df = shapefile_df_180
-  )
-  print(p)
-  dev.off()
-  
-  nc_close(ncin)
-  
-}  
-
-
-graphics.off()
-sink()
+  graphics.off()
+  sink()

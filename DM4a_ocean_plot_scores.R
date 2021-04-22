@@ -65,9 +65,9 @@ region_ls <- rbind(c("global", -90,90,-180,180),c("NH", 0,90,-180,180),c("NHextr
   dplyr::rename (reg_name = V1, min_lat = V2, max_lat = V3, min_lon = V4, max_lon = V5)
 
 
-source_ls <- c("Margo", "Margo_min", "Margo_max",  "Tierney", "Tierney_min", "Tierney_max") #"AH", "glomap", "kn")
+#source_ls <- c("Margo", "Margo_min", "Margo_max",  "Tierney", "Tierney_min", "Tierney_max", "AH", "glomap", "kn")
 
-#source_ls <- c("Margo", "Margo_min", "Margo_max")
+source_ls <- c("kn", "kn_min", "kn_max")
 steps = c(1, 2, 3)
 
 ##### OPEN AND MANIPULATE SCORES DATA ###########################################################
@@ -75,9 +75,9 @@ steps = c(1, 2, 3)
 for (source in source_ls) {
   for (region in region_ls$reg_name) {
     # print(list.files(
-    #   "output_scores/Ocean",
-    #   pattern = paste ("*", source, "_", region, ".csv", sep = ""),
-    #   full.names = TRUE))
+    #    "output_scores/Ocean",
+    #    pattern = paste ("*", source, "_", region, ".csv", sep = ""),
+    #    full.names = TRUE))
     
     df_tbl <- #load all csv files in directory and rbind them
       list.files(
@@ -85,13 +85,6 @@ for (source in source_ls) {
         pattern = paste ("*", source, "_", region, ".csv", sep = ""),
         full.names = TRUE
       ) %>%
-      
-      # Single model output
-      # map_df( ~ read.csv(.)) %>% `colnames<-`(
-      #     c("X1","varname","mean_null","random_null","MIROC"
-      #     )
-      #   )
-      
       map_df( ~ read.csv(.)) %>% `colnames<-`(
         c(
           "X1","varname","mean_null","random_null","AWI1","AWI2","CCSM4",
@@ -171,35 +164,36 @@ for (source in source_ls) {
   }
 }
 
-#rm(list=ls(pattern="^df")) # clean environment
+rm(list=ls(pattern="^df")) # clean environment
 
 ##### ASSIGN COLOURS FOR EACH SCORE (see plot legend) ################################################################################
 
 refs_ls <- c("Margo", "Tierney") 
 #, "AH", "glomap", "kn") # min/max already used. 
 
-refs <- "Margo"
+refs <- "kn"
 #for (refs in refs_ls) { # loop needed if more than one source (ie B and CL)
 print(refs)
 
 for (region in region_ls$reg_name) {
-  print(region)
+  #print(region)
   #print(paste ("data", refs, "max", region, sep = "_"))
-  data <- join(
-    get(paste ("data", refs, "max", region, sep = "_")) %>% dplyr::select (var, model, step, score_max),
-    get(paste ("data", refs, "min", region, sep = "_")) %>% dplyr::select (var, model, step, score_min),
-    by = c("var", "model", "step") ,type = "left",match = "all") %>%
-    join (., get(paste ("data", refs, region, sep = "_")) %>% dplyr::select (var, model, step, mean_raw, rand_raw, score_raw),
-          by = c("var", "model", "step") ,
-          type = "left",match = "all") %>%
-    mutate (min = pmin(score_max, score_raw, score_min),
-            max = pmax(score_max, score_raw, score_min)) %>%
-    dplyr::select (var, model, step, mean_raw, rand_raw, score_raw, min, max) %>%
-    dplyr::rename (mean_null = mean_raw,
-                   rand_null = rand_raw,
-                   val = score_raw) %>%
-    mutate (z_val = NA,z_min = NA,z_max = NA)
   
+  data <- join(
+  get(paste ("data", refs, "max", region, sep = "_")) %>% dplyr::select (var, model, step, score_max),
+  get(paste ("data", refs, "min", region, sep = "_")) %>% dplyr::select (var, model, step, score_min),
+  by = c("var", "model", "step") ,type = "left",match = "all") %>%
+  join (., get(paste ("data", refs, region, sep = "_")) %>% dplyr::select (var, model, step, mean_raw, rand_raw, score_raw),
+  by = c("var", "model", "step") ,
+  type = "left",match = "all") %>%
+  mutate (min = pmin(score_max, score_raw, score_min),
+  max = pmax(score_max, score_raw, score_min)) %>%
+  dplyr::select (var, model, step, mean_raw, rand_raw, score_raw, min, max) %>%
+  dplyr::rename (mean_null = mean_raw,
+  rand_null = rand_raw,
+  val = score_raw) %>%
+  mutate (z_val = NA,z_min = NA,z_max = NA)
+
   #assign values for colours
   for (k in 1:dim(data)[1]) {
     rand <- data$rand_null[k]
