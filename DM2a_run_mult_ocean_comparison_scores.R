@@ -28,11 +28,11 @@
 source(paste(getwd(),"/LGM_Benchmarking/cfg.r", sep=""))
 
 #load observations 
-#obs_file <- paste (dataobspath,'ocean_data/SST_Masa/ocean_obs_Margo.csv',sep="")
+obs_file <- paste (dataobspath,'ocean_data/SST_Masa/ocean_obs_Margo.csv',sep="")
 #obs_file <- paste (dataobspath,'ocean_data/SST_Masa/ocean_obs_Tierney.csv',sep="")
 #obs_file <- paste (dataobspath,'ocean_data/SST_Masa/ocean_obs_AH.csv',sep="")
 #obs_file <- paste (dataobspath,'ocean_data/SST_Masa/ocean_obs_glomap.csv',sep="")
-obs_file <- paste (dataobspath,'ocean_data/SST_Masa/ocean_obs_kn.csv',sep="")
+#obs_file <- paste (dataobspath,'ocean_data/SST_Masa/ocean_obs_kn.csv',sep="")
 
 obsraw <- read.csv(obs_file)   
 

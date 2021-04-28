@@ -46,6 +46,7 @@ region_ls <- rbind( c("global", -90,90,-180,180),c("NH", 0,90,-180,180),c("NHext
                     c("ExtratropicalAsia", 30,75,60,135), c("Africa",-35,35,-10,50)) %>%
   as.data.frame (.) %>%
   dplyr::rename (reg_name = V1, min_lat = V2, max_lat = V3, min_lon = V4, max_lon = V5)
+#---------------------------------------------------------------------
 
 #--------------------------------------------------------------
 #### LOAD OBSERVATIONS AND ORGANISE DATA ####  
@@ -58,10 +59,6 @@ grid <- data_obs %>% dplyr::select (lat, lon)
 
 data_Margo <- data_obs %>%  filter(ref == "Margo") 
 
-
-#### SELECT OVERLAPPING SITES BETWEEN Margo and Tierney #### 
-# load gridcells from Margo's gridded data and filter Tierney to just that spread of data
-
 grid_Margo <- grid
 grid_Margo$ref <- "Margo"
 
@@ -70,46 +67,70 @@ data_Tierney <- read.csv(file.path(dataobspath, "/ocean_data/SST_Masa/ocean_obs_
   dplyr::select (lat, lon, ocean_tas_anom, ref)
 grid <- data_Tierney %>% dplyr::select (lat, lon)
 
-
 grid_Tierney <- grid
 grid_Tierney$ref <- "Tierney"
-
 
 # end of data manipulation # 
 #### BOXPLOT #1: only data ####
 obs <- rbind(data_Margo, data_Tierney)
+
+
+# # Group the data by regions
+obs <-
+  obs %>% mutate(region = case_when(
+    lon >= -60 & lon <= -10 & lat >= 30 & lat <= 50 ~ "N Atlantic",
+    lon >= -10 & lon <= 30 & lat >= 35 & lat <= 70 ~ "W Europe",
+    lon >= 50 & lon <= 150 & lat >= 35 & lat <= 75 ~ "Extratropical Asia",
+    lon >= -180 & lon <= 179 & lat >= -30 & lat <= 30 ~ "Tropical Oceans",
+    lon >= -10 & lon <= 50 & lat >= -35 & lat <= 35 ~ "Africa",
+    TRUE ~  "other"
+  ))
+
+
+# for (region in region_ls$reg_name) {
+#   print(region)
+#   obs <- obs %>% filter (lat >= region_ls %>% filter (reg_name == region) %>% dplyr::select(min_lat) %>% as.numeric() &
+#                            lat <= region_ls %>% filter (reg_name == region) %>% dplyr::select(max_lat) %>% as.numeric() &
+#                            lon >= region_ls %>% filter (reg_name == region) %>% dplyr::select(min_lon) %>% as.numeric() &
+#                            lon <= region_ls %>% filter (reg_name == region) %>% dplyr::select(max_lon) %>% as.numeric()) %>% mutate(region = region)
+#   
+#   obs_reg <- obs_reg %>% mutate(region = region)
+#   
+#   obs_reg <- obs_all_ls
+
+#obs = obs[!is.na(obs$region),] #remove lats outside of range
+# #obs <- obs[!is.na(obs$lat_band),] #remove lats outside of range
+
+
+
+# # Group the data by latitudinal bands
+# brkpnt <- seq(-90, 90, by = 30)
+# startpnt <- brkpnt[1:length(brkpnt) - 1]
+# endpnt <- brkpnt[2:length(brkpnt)]
+#print('After )
+# obs$lat_band <- cut(obs$lat, breaks = brkpnt,labels = brk_lab)
+# obs = obs[!is.na(obs$lat_band),] #remove lats outside of range
+# #obs <- obs[!is.na(obs$lat_band),] #remove lats outside of range
+# latband_ls = (unique(obs$lat_band))
 # 
-#  Group the data by latitudinal bands
-brkpnt <- seq(-90, 90, by = 30)
-startpnt <- brkpnt[1:length(brkpnt) - 1]
-endpnt <- brkpnt[2:length(brkpnt)]
-brk_lab <- paste(startpnt,   ' to ', endpnt, sep = '')
-
-obs$lat_band <- cut(obs$lat, breaks = brkpnt,labels = brk_lab)
-obs = obs[!is.na(obs$lat_band),] #remove lats outside of range
-#obs <- obs[!is.na(obs$lat_band),] #remove lats outside of range
-latband_ls = (unique(obs$lat_band))
-
-#save statistical summary of each variable for each lat band
-for (band in latband_ls) {
-  obs_latband <- obs %>% filter(obs$lat_band == band)
-  sum_obs = summary(obs_latband %>% filter(obs_latband$ref == "Margo"))
-  write.csv(sum_obs, paste(datapath, band,"_summary_Margo.csv", sep=""))
-  sum_obs = summary(obs_latband %>% filter (obs_latband$ref == "Tierney"))
-  write.csv(sum_obs, paste(datapath, band,"_summary_Tierney.csv", sep=""))
+# #save statistical summary of each variable for each lat band
+regionName_ls = list("N Atlantic","W Europe",  "Extratropical Asia",  "Tropical Oceans", "Africa", "other")
+for (reg in regionName_ls) {
+  obs_region <- obs %>% filter(obs$region == reg)
+  sum_obs = summary(obs_region %>% filter(obs_region$ref == "Margo"))
+  write.csv(sum_obs, paste(datapath, reg,"_summary_Margo.csv", sep=""))
+  sum_obs = summary(obs_region %>% filter (obs_region$ref == "Tierney"))
+  write.csv(sum_obs, paste(datapath, reg,"_summary_Tierney.csv", sep=""))
 }
-# 
+
 obs2 = obs
 # 
-obs <- reshape2::melt(obs, na.rm=F, id.vars = c("lat","lon","ref", "lat_band"), variable.name = "var")
-
+obs <- reshape2::melt(obs, na.rm=F, id.vars = c("lat","lon","ref", "region"), variable.name = "var")
 
 # # undo with: dcast(obs, lat + lon + ref + lat_band ~ var, value.var = "value")
 obs$ref <- factor(obs$ref , levels=c("Margo", "Tierney")) # reorder boxplots bottom to top
-# 
-scales_y <- scale_y_continuous(breaks=scales::extended_breaks(n=4),limits=c(5,-10))
 
-bp <- ggplot(na.omit(obs), aes(x=lat_band, y=value, fill=ref)) + 
+bp <- ggplot(na.omit(obs), aes(x=region, y=value, fill=ref)) + 
   geom_boxplot(aes(fill=ref),outlier.alpha = 0.5, outlier.size = 0.5, outlier.colour = "grey86",
                width = 0.8, varwidth=F, lwd=0.01,position = position_dodge2(preserve = "single")) +
   theme_bw()+
@@ -128,8 +149,10 @@ bp <- ggplot(na.omit(obs), aes(x=lat_band, y=value, fill=ref)) +
 
 #print(bp)
 
+
 # 
-ggsave(bp,file=paste(plotpath,"DM_boxplots/boxplot30_data_MargoTierney.jpg", sep=""),width=12,height=7)
+ggsave(bp,file=paste(plotpath,"DM_boxplots/boxplotRegion_data_MargoTierney.jpg", sep=""),width=12,height=7)
+
 
 #### BOXPLOT #2: observations and model data ####
 
@@ -140,13 +163,13 @@ mod_dir <- ncpath_ocean
 mod_files <- list.files(mod_dir, pattern = "anomalies", full.names = TRUE)
 
 # create list of model names for output
-model_ls <- lapply(list.files(mod_dir, pattern="anomalies", full.names = F), FUN = my_name_trim) %>% as.character (.) 
+model_ls <- lapply(list.files(mod_dir, pattern="anomalies", full.names = F), FUN = my_name_trim) %>% as.character (.)
 
 obs_coord = unique(obs[,1:2])
 
 for (mod_name in model_ls){
-  ncname <- paste(ncpath_ocean, mod_name, "_LGM_anomalies.nc",sep="") 
-  ncin <- nc_open(ncname) 
+  ncname <- paste(ncpath_ocean, mod_name, "_LGM_anomalies.nc",sep="")
+  ncin <- nc_open(ncname)
   lat <- ncin[["dim"]][["lat"]][["vals"]]; nlat <- length(lat)
   lon <- ncin[["dim"]][["lon"]][["vals"]];nlon <- length(lon)
   grid <- expand.grid(lon=lon, lat=lat)
@@ -182,8 +205,21 @@ for (mod_name in model_ls){
 }
 nc_close(ncin)
 
-pts$lat_band <- cut(pts$lat, breaks = brkpnt,labels = brk_lab)
-#print(colnames(pts))
+pts <-
+  pts %>% mutate(region = case_when(
+    lon >= -60 & lon <= -10 & lat >= 30 & lat <= 50 ~ "N Atlantic",
+    lon >= -10 & lon <= 30 & lat >= 35 & lat <= 70 ~ "W Europe",
+    lon >= 50 & lon <= 150 & lat >= 35 & lat <= 75 ~ "Extratropical Asia",
+    lon >= -180 & lon <= 179 & lat >= -30 & lat <= 30 ~ "Tropical Oceans",
+    lon >= -10 & lon <= 50 & lat >= -35 & lat <= 35 ~ "Africa",
+    TRUE ~  "other"
+  ))
+
+
+# pts <- pts %>% filter (lat >= region_ls %>% filter (reg_name == region) %>% dplyr::select(min_lat) %>% as.numeric() &
+#                          lat <= region_ls %>% filter (reg_name == region) %>% dplyr::select(max_lat) %>% as.numeric() &
+#                          lon >= region_ls %>% filter (reg_name == region) %>% dplyr::select(min_lon) %>% as.numeric() &
+#                          lon <= region_ls %>% filter (reg_name == region) %>% dplyr::select(max_lon) %>% as.numeric())
 
 # rename vars
 pts <- data.frame(lapply(pts, function(x) {gsub("ocean_tas_anom", "ocean_tas_anom", x)}))
@@ -205,7 +241,7 @@ data_all$value <- as.numeric(data_all$value)
 data_all$var <- as.factor(data_all$var)
 data_all$ref <- factor(data_all$ref ,
                        levels= c(rev(as.character(model_ls)), "Margo", "Tierney"))
-data_all$lat_band <- factor(data_all$lat_band, levels = brk_lab[2:8])
+#data_all$region <- factor(data_all$region, levels = brk_lab[2:8])
 
 saveRDS(data_all, file = paste(datapath,"obs_mod.RDS", sep=""))
 
@@ -218,7 +254,7 @@ colorSet <- rev(c(n[1:2],'grey75', 'grey40',n[3:length(n)]))
 require(facetscales) # install with devtools::install_github("zeehio/facetscales")
 #set limits for each variable (only possible with facetscales)
 scales_y <- list(
-  ocean_tas_anom = scale_y_continuous(breaks=scales::extended_breaks(n=4),limits=c(5,-30))
+  ocean_tas_anom = scale_y_continuous(breaks=scales::extended_breaks(n=4),limits=c(5,-35))
   # GDD5 = scale_y_continuous(breaks=scales::extended_breaks(n=3),limits=c(1500,-4000)),
   # MAP = scale_y_continuous(breaks=scales::extended_breaks(n=5),limits=c(1500,-1500)),
   #ocean_mtco_anom = scale_y_continuous(breaks=scales::extended_breaks(n=4),limits=c(10,-20)),
@@ -229,9 +265,9 @@ scales_x <- list(
   name = scale_x_discrete()
 )
 
-bpMod <-ggplot(na.omit(data_all), aes(x=lat_band, y=value, fill=var)) + 
+bpMod <-ggplot(na.omit(data_all), aes(x=region, y=value, fill=var)) +
   geom_hline(yintercept = 0, linetype="solid", color = "black", size=0.5) +
-  geom_boxplot(aes(fill=ref),outlier.alpha = 0.8, outlier.size = 0.5, outlier.colour = "grey86", 
+  geom_boxplot(aes(fill=ref),outlier.alpha = 0.8, outlier.size = 0.5, outlier.colour = "grey86",
                width = 0.8, varwidth=F,lwd=0.2,fatten=1,position = position_dodge2(preserve = "single")) +
   theme_bw()+
   theme(axis.title.x=element_blank(),
@@ -240,13 +276,13 @@ bpMod <-ggplot(na.omit(data_all), aes(x=lat_band, y=value, fill=var)) +
         axis.text.y = element_text(angle = -90, vjust = -0.1, hjust=0.5,size=13,face="bold"),
         legend.position="left") +
   guides(fill = guide_legend(reverse = TRUE,
-                             direction = "vertical", 
+                             direction = "vertical",
                              nrow = 5,
                              ncol = 3,
-                             label.position = "bottom", 
+                             label.position = "bottom",
                              legend.box.just = "right",
                              #legend.text.align=0,
-                             label.theme = element_text(angle = -90, vjust = 0.5, hjust=0,size=10), 
+                             label.theme = element_text(angle = -90, vjust = 0.5, hjust=0,size=10),
                              title.position = "bottom", title.theme = element_text(angle = 90)))+
   
   scale_x_discrete(position = "top") +
@@ -265,8 +301,8 @@ bpMod <-ggplot(na.omit(data_all), aes(x=lat_band, y=value, fill=var)) +
 
 #print(bpMod)
 
-ggsave(bpMod,file=paste(plotpath,"DM_boxplots/boxplot30_ocean_dataMargoTierney_model.jpg", sep=""),width=14,height=11)
-#ggsave(bpMod,file=paste(plotpath,"DM_boxplots/boxplot_ocean_data_model.pdf", sep=""),width=11,height=14)
+ggsave(bpMod,file=paste(plotpath,"DM_boxplots/boxplotRegion_ocean_dataMargoTierney_model.jpg", sep=""),width=14,height=11)
+#ggsave(bpMod,file=paste(plotpath,"DM_boxplots/boxplotRegion_ocean_data_model.pdf", sep=""),width=11,height=14)
 
 
 # extract statistical summary of all variables used in the boxplot

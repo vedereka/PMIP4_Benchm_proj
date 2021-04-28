@@ -44,14 +44,16 @@ makeComparison <- function(mod) {
     if (modgrid) out = c(out, amod[xyidU]) else out = c(out, 1)
     return(out)
   }
-  
+
   ## runs the comparisons
   obsSims = sapply(xyidU, obsSim) #observation, model and null data (n=number of data points in obs)
-  
+  #print('Dims')
+  #print(dim(obsSims))
   # The score function provides 3 measures: 
   # 1) straight NME/NMSE comparisons;
-  # 2) comparisons with the influcance of the mean removed (i.e testing pattern and variablity);
-  # 3) comparisons with the influance of the mean and variance removed (i.e testing the pattern only).
+  # 2) comparisons with the influence of the mean removed (i.e testing pattern and variablity);
+  # 3) comparisons with the influence of the mean and variance removed (i.e testing the pattern only).
+  
   
   score(NME(obsSims[1,], obsSims[2,], w =  obsSims[3,]))
   
