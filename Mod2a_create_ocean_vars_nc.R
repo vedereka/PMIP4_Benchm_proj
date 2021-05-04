@@ -75,30 +75,43 @@ for (model in model_ls){
       assign(paste ("data_array_",variab,sep=""),data_array)
       
     }
+  
+    #-----------------------------------------------
     # Plot to check whether arrays Ok -----------
     if (variab == "tas") {
-      cutpts <-  c(seq(from = -25, to = 15,length.out =10))
+      cutpts <-  c(seq(from = -10, to = 2,length.out =10))
     }
     else if(variab == "clt") {
       cutpts <-  c(seq(from = -30, to = 15,length.out =10))
     }
     else if(variab == "pr") {
-        cutpts <-  c(seq(from = -2000, to = 2000,length.out =10)) 
+      cutpts <-  c(seq(from = -2000, to = 2000,length.out =10)) 
     }
-    #cairo_pdf(
-      #paste(plotpath,"mod_vars/vars_",variab,"_ocean_data_",model,'.pdf', sep = ""),width = 11.69,
-     # height = 8.27, onefile = T)
     
-    jpeg(paste(plotpath,"mod_vars/vars_",variab,"_ocean_data_",model,'.jpg', sep = ""), width = 600, height = 400,quality = 75)
+    print(variab)
+    # cairo_pdf(
+    #   paste(plotpath,"mod_vars/ocean_vars_",variab,"_data_",model,'.jpg', sep = ""),width = 11.69, height = 8.27, onefile = T)
     
+    #cutpts <-  c(seq(from = min(data_array, na.rm=TRUE), to = max(data_array, na.rm=TRUE),length.out =10))
     grid <- expand.grid(lon=lon, lat=lat)
-    name <- paste(model,"_",variab, sep="")
+    name <- paste(model,"_ocean_",variab, sep="")
     lp <- levelplot(data_array ~ lon * lat, data=grid, at=cutpts, cuts=11, pretty=T, col.regions=(rev(brewer.pal(10,"RdBu"))), main=name)
+        
+    assign(paste("varplot",variab,sep="_"),lp)
+    
+    
+    fig <- ggarrange(get(paste("varplot", variab, sep="_")),   ncol = 1, nrow = 1)
+    fig
+    
+    ggsave(fig,file=paste(plotpath,"mod_vars/ocean_vars_",variab,"_data_",model,'.jpg', sep = ""),width = 11.69, height = 8.27)   
+    
     print(lp)
+    
+    dev.off()
+    
+    rm(ls="lp")
   }
-  dev.off()
   
-  #ggsave(lp,file=paste(plotpath,"mod_vars/vars_",variab,"_ocean_data_",model,".jpg", sep=""),width=11,height=14)
   
   ### MTCO and MTWA ####
   for (mon in 1:12) {
@@ -155,69 +168,6 @@ for (model in model_ls){
   assign("data_array_mtwa",MTWA_array)
   assign("data_array_mtco",MTCO_array)
   
-  ### GDD5 #### - Don't need this for ocean
-  
-  # 1. loop through each row and convert it to ls
-  # 2. interpolate it daily
-  # 3. select number of days above 5 degrees for each month and add up their temperature
-  # 4. add a column PI/LGM_data_vec$GDD5 with that value
-  
-  # Use function interpol_spline_cons_mean (y_points, month_len, max_iter, tol)
-  #   y_points = c(12, 13, 14, 29, 32, 35, 33, 24, 18, 10, 8, 7) # data
-  #   month_len = c(31, 28 ,31, 30, 31, 30, 31, 31, 30, 31, 30, 31) # month length the data represents
-  #   y_interpolated = interpol_spline_cons_mean(y_points, month_len, 100, 0.01) # interpolate
-  #   unlist(lapply(unname(split(y_interpolated, rep(1:length(month_len), month_len))), mean)) # see whether the means are the same with the threshold defined
-  #
-  # month_len = c(31, 28 ,31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
-  # max_iter= 100 # max num of iterations to achieve conversion
-  # tol = 0.01 #tolerance threshold
-  # dates <- seq(as.Date("2001-01-01"), length = 365, by = "days") # need to add a year or it does not work
-  # gdd5_func <- function (x) {sum(x[which( x >5)])} # function to sum temp of days over 5 deg  
-  # x3 <- matrix(data=NA, nrow = dim(PI_vec)[1], ncol = dim(PI_vec)[2]) # prealocate answer
-  # x3 <- as.data.frame(x3)
-  # x3[,1:2] <- PI_vec [,1:2]
-  # colnames(x3) <- colnames (PI_vec)  
-  # 
-  # per_ls <- c("LGM", "PI")
-  # 
-  # for (per in per_ls) {
-  #   if (per == "LGM") {
-  #     data = LGM_vec
-  #   } else {
-  #     data = PI_vec
-  #   }
-  #   for (i in 1:dim(PI_vec)[1]) {
-  #     x1 <- data[i, 3:14]
-  #     if (sum(is.na(x1)) != 0)
-  #       next #ocean gridcell, ignore # But we want to keep these here
-  #     else {
-  #       y_points <- as.numeric(x1)
-  #       y_interp = quiet(interpol_spline_cons_mean(y_points, month_len, max_iter, tol))
-  #       x2 <- xts(x = y_interp, order.by = dates)
-  #       x2_mon <- split(x2, f = "months")
-  #       temps_avg <-as.numeric(lapply(x2_mon, gdd5_func))# values to add to new netcdf
-  #       x3 [i, 3:14] <- t(temps_avg)
-  #     }
-  #   }
-  #   
-  #   x3$GDD5 <- apply(x3[, 3:14],MARGIN = 1,FUN = sum,na.rm = F)
-  #   
-  #   if (per == "LGM") {
-  #     LGM_data_vec_gdd5 = x3
-  #   } else {
-  #     PI_data_vec_gdd5 = x3
-  #   }
-  # }
-  # 
-  # 
-  # # compute GDD
-  # #This is wrong. GGDD5 is monthly!!!!
-  # GDD5_anom <- LGM_data_vec_gdd5[,1:2]
-  # GDD5_anom$GDD5 <- LGM_data_vec_gdd5$GDD5 - PI_data_vec_gdd5$GDD5
-  # 
-  # # convert data_vec back into an array and then reshape the array
-  # GDD5_array <- array(as.matrix(GDD5_anom[,3]), dim=c(nlon,nlat)); 
-  # assign("data_array_gdd5",GDD5_array)
   
   ### Create and write netCDF files -- ncdf4 versions ####
   # here I have one data array for each variable in the model
@@ -280,30 +230,31 @@ for (model in model_ls){
   ncout
   nc_close(ncout)# close the file, writing data to disk
 
+  
   #-------- plot the calculated anomalies mtco and mtwa -------  
   # cairo_pdf(
   #   paste(plotpath,"mod_vars/vars_MTCO_ocean_data_",model,'.pdf', sep = ""),width = 11.69,
   #   height = 8.27, onefile = T)
   
-  jpeg(paste(plotpath,"mod_vars/vars_MTCO_ocean_data_",model,'.jpg', sep = ""), width = 600, height = 400,quality = 75)
-  cutpts <-  c(seq(from = min(data_array_mtco, na.rm=TRUE), to = max(data_array_mtco, na.rm=TRUE),length.out =10))
-  grid <- expand.grid(lon=lon, lat=lat)
-  name <- paste(model,"_mtco", sep="")
-  lp <- levelplot(data_array_mtco ~ lon * lat, data=grid, at=cutpts, cuts=11, pretty=T, col.regions=(rev(brewer.pal(10,"RdBu"))), main=name)
-  print(lp)
-  dev.off()
+  # jpeg(paste(plotpath,"mod_vars/vars_MTCO_ocean_data_",model,'.jpg', sep = ""), width = 600, height = 400,quality = 75)
+  # cutpts <-  c(seq(from = min(data_array_mtco, na.rm=TRUE), to = max(data_array_mtco, na.rm=TRUE),length.out =10))
+  # grid <- expand.grid(lon=lon, lat=lat)
+  # name <- paste(model,"_mtco", sep="")
+  # lp <- levelplot(data_array_mtco ~ lon * lat, data=grid, at=cutpts, cuts=11, pretty=T, col.regions=(rev(brewer.pal(10,"RdBu"))), main=name)
+  # print(lp)
+  # dev.off()
  #------ 
   # cairo_pdf(
   #   paste(plotpath,"mod_vars/vars_MTWA_ocean_data_",model,'.pdf', sep = ""),width = 11.69,
   #   height = 8.27, onefile = T)
   
-  jpeg(paste(plotpath,"mod_vars/vars_MTWA_ocean_data_",model,'.jpg', sep = ""), width = 600, height = 400,quality = 75)
-  cutpts <-  c(seq(from = min(data_array_mtwa, na.rm=TRUE), to = max(data_array_mtwa, na.rm=TRUE),length.out =10))
-  grid <- expand.grid(lon=lon, lat=lat)
-  name <- paste(model,"_mtwa", sep="")
-  p <- levelplot(data_array_mtwa ~ lon * lat, data=grid, at=cutpts, cuts=11, pretty=T, col.regions=(rev(brewer.pal(10,"RdBu"))), main=name)
-  print(p)
-  dev.off()
+  # jpeg(paste(plotpath,"mod_vars/vars_MTWA_ocean_data_",model,'.jpg', sep = ""), width = 600, height = 400,quality = 75)
+  # cutpts <-  c(seq(from = min(data_array_mtwa, na.rm=TRUE), to = max(data_array_mtwa, na.rm=TRUE),length.out =10))
+  # grid <- expand.grid(lon=lon, lat=lat)
+  # name <- paste(model,"_mtwa", sep="")
+  # p <- levelplot(data_array_mtwa ~ lon * lat, data=grid, at=cutpts, cuts=11, pretty=T, col.regions=(rev(brewer.pal(10,"RdBu"))), main=name)
+  # print(p)
+  # dev.off()
 }
 
 graphics.off()

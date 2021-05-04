@@ -187,17 +187,17 @@ for (source in data_source_ls) {
     #print("Mapping plots")
     # MAP 1: ANOMALIES
     
-    cols <- (rev(brewer.pal(11, "RdBu")))
+    cols <- (rev(brewer.pal(9, "RdBu")))
     varunits <- "K"
     
-    cairo_pdf(
-      paste(plotpath, 'oceanplots/MasaData/', source, '_SST.pdf', sep = ""),width = 11.69,
-      height = 8.27, onefile = T)
+    #cairo_pdf(
+      #paste(plotpath, 'oceanplots/MasaData/', source, '_SST.pdf', sep = ""),width = 11.69,
+      #height = 8.27, onefile = T)
     
     var_title <-paste(source, "SST anomaly",sep = "")
     
     #colbreaks
-    colbreaks <- c(seq(from = -10, to = 2, length.out = 11))
+    colbreaks <- c(seq(from = -10, to = 2, length.out = 10))
     #colbreaks <- c(seq(from = min(SST, na.rm = TRUE),to = max(SST, na.rm = TRUE),length.out = 11
     #))
     
@@ -209,8 +209,18 @@ for (source in data_source_ls) {
       varunits = varunits,
       shapefile_df = shapefile_df_180
     )
+    
+    assign(paste("map_plot_SST",var_title,sep="_"),p)
+    #print(p)
+    #dev.off()
+    
+    fig <- ggarrange(get(paste("map_plot_SST", var_title, sep="_")),   ncol = 1, nrow = 1)
+    fig
+    
+    ggsave(fig,file=paste(plotpath, 'oceanplots/MasaData/', source, '_SST.jpg', sep = ""),width = 11.69, height = 8.27)
     print(p)
     dev.off()
+    rm(ls="p")
     
     nc_close(ncin)
     

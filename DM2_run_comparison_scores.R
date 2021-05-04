@@ -93,7 +93,7 @@ for (source in source_ls) {
       ## filename with output ##
       scores_output_filename <- paste(getwd(),"/output_scores/", mod_varname, "_NME_", out_filename, sep = "")
       
-      ## open stuff ## s
+      ## open stuff ## 
       mods <-
         lapply(mod_files, raster, varname = mod_varname) # for 2D netCDF files
       ## filter obsraw by ref and region ##
@@ -107,6 +107,8 @@ for (source in source_ls) {
       obs <-
         obs[, c(1, 2, which(colnames(obs) == mod_varname))] # select relevant variable
       obs <- na.omit(obs)
+     
+      print(paste(region, mod_varname, dim(obs)))
       
       ## save output ##
       comp_output = matrix(

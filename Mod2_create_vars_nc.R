@@ -74,6 +74,17 @@ for (model in model_ls){
       
     }
     #-----------------------------------------------
+    # Plot to check whether arrays Ok -----------
+    if (variab == "tas") {
+      cutpts <-  c(seq(from = -25, to = 15,length.out =10))
+    }
+    else if(variab == "clt") {
+      cutpts <-  c(seq(from = -30, to = 15,length.out =10))
+    }
+    else if(variab == "pr") {
+      cutpts <-  c(seq(from = -2000, to = 2000,length.out =10)) 
+    }
+    
     print(variab)
     cairo_pdf(
       paste(plotpath,"mod_vars/vars_",variab,"_data_",model,'.pdf', sep = ""),width = 11.69,

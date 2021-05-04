@@ -64,6 +64,7 @@ data_Margo <- data_obs %>%  filter(ref == "Margo")
 
 grid_Margo <- grid
 grid_Margo$ref <- "Margo"
+#------------------------
 
 # Get Tierney data (also gridded, same grid as Margo)
 data_Tierney <- read.csv(file.path(dataobspath, "/ocean_data/SST_Masa/ocean_obs_Tierney.csv"), na.strings = "NA") %>% 
@@ -73,11 +74,40 @@ grid <- data_Tierney %>% dplyr::select (lat, lon)
 
 grid_Tierney <- grid
 grid_Tierney$ref <- "Tierney"
+#------------------------
 
+# Get AH data 
+data_AH <- read.csv(file.path(dataobspath, "/ocean_data/SST_Masa/ocean_obs_AH.csv"), na.strings = "NA") %>% 
+  dplyr::select (lat, lon, ocean_tas_anom, ref)
+grid <- data_AH %>% dplyr::select (lat, lon)
+
+
+grid_AH <- grid
+grid_AH$ref <- "AH"
+#------------------------
+
+# Get glomap data 
+data_glomap <- read.csv(file.path(dataobspath, "/ocean_data/SST_Masa/ocean_obs_glomap.csv"), na.strings = "NA") %>% 
+  dplyr::select (lat, lon, ocean_tas_anom, ref)
+grid <- data_glomap %>% dplyr::select (lat, lon)
+
+
+grid_glomap <- grid
+grid_glomap$ref <- "glomap"
+
+#------------------------
+# Get glomap data (also gridded)
+data_kn <- read.csv(file.path(dataobspath, "/ocean_data/SST_Masa/ocean_obs_kn.csv"), na.strings = "NA") %>% 
+  dplyr::select (lat, lon, ocean_tas_anom, ref)
+grid <- data_glomap %>% dplyr::select (lat, lon)
+
+
+grid_kn <- grid
+grid_glomap$ref <- "kn"
 
 # end of data manipulation # 
 #### BOXPLOT #1: only data ####
-obs <- rbind(data_Margo, data_Tierney)
+obs <- rbind(data_Margo, data_Tierney, data_AH, data_glomap, data_kn)
 # 
 #  Group the data by latitudinal bands
 brkpnt <- seq(-90, 90, by = 30)
@@ -97,6 +127,12 @@ for (band in latband_ls) {
   write.csv(sum_obs, paste(datapath, band,"_summary_Margo.csv", sep=""))
   sum_obs = summary(obs_latband %>% filter (obs_latband$ref == "Tierney"))
   write.csv(sum_obs, paste(datapath, band,"_summary_Tierney.csv", sep=""))
+  sum_obs = summary(obs_latband %>% filter (obs_latband$ref == "AH"))
+  write.csv(sum_obs, paste(datapath, band,"_summary_AH.csv", sep=""))
+  sum_obs = summary(obs_latband %>% filter (obs_latband$ref == "glomap"))
+  write.csv(sum_obs, paste(datapath, band,"_summary_glomap.csv", sep=""))
+  sum_obs = summary(obs_latband %>% filter (obs_latband$ref == "kn"))
+  write.csv(sum_obs, paste(datapath, band,"_summary_kn.csv", sep=""))
 }
 # 
 obs2 = obs
@@ -105,7 +141,7 @@ obs <- reshape2::melt(obs, na.rm=F, id.vars = c("lat","lon","ref", "lat_band"), 
 
 
 # # undo with: dcast(obs, lat + lon + ref + lat_band ~ var, value.var = "value")
-obs$ref <- factor(obs$ref , levels=c("Margo", "Tierney")) # reorder boxplots bottom to top
+obs$ref <- factor(obs$ref , levels=c("Margo", "Tierney", "AH", "glomap", "kn")) # reorder boxplots bottom to top
 # 
 scales_y <- scale_y_continuous(breaks=scales::extended_breaks(n=4),limits=c(5,-10))
 
@@ -120,16 +156,16 @@ bp <- ggplot(na.omit(obs), aes(x=lat_band, y=value, fill=ref)) +
         legend.position="top",
         legend.box = "horizontal", legend.text.align=0)+
   scale_fill_manual(name = element_blank(),
-                    breaks = c('Margo', 'Tierney'),
-                    labels = c(expression('Margo', 'Tierney')),
-                    values = c('orange', 'steelblue4')) +
+                    breaks = c('Margo', 'Tierney', 'AH', 'glomap', 'kn'),
+                    labels = c(expression('Margo', 'Tierney', 'AH', 'glomap', 'kn')),
+                    values = c('orange', 'steelblue4', 'cyan3', 'brown4', 'springgreen' )) +
   facet_grid(.~ var,scales='fixed') +
   coord_flip()
 
 #print(bp)
 
 # 
-ggsave(bp,file=paste(plotpath,"DM_boxplots/boxplot30_data_MargoTierney.jpg", sep=""),width=12,height=7)
+ggsave(bp,file=paste(plotpath,"DM_boxplots/boxplot30_data_All.jpg", sep=""),width=12,height=7)
 
 #### BOXPLOT #2: observations and model data ####
 
@@ -140,37 +176,37 @@ mod_dir <- ncpath_ocean
 mod_files <- list.files(mod_dir, pattern = "anomalies", full.names = TRUE)
 
 # create list of model names for output
-model_ls <- lapply(list.files(mod_dir, pattern="anomalies", full.names = F), FUN = my_name_trim) %>% as.character (.) 
+model_ls <- lapply(list.files(mod_dir, pattern="anomalies", full.names = F), FUN = my_name_trim) %>% as.character (.)
 
 obs_coord = unique(obs[,1:2])
 
 for (mod_name in model_ls){
-  ncname <- paste(ncpath_ocean, mod_name, "_LGM_anomalies.nc",sep="") 
-  ncin <- nc_open(ncname) 
+  ncname <- paste(ncpath_ocean, mod_name, "_LGM_anomalies.nc",sep="")
+  ncin <- nc_open(ncname)
   lat <- ncin[["dim"]][["lat"]][["vals"]]; nlat <- length(lat)
   lon <- ncin[["dim"]][["lon"]][["vals"]];nlon <- length(lon)
   grid <- expand.grid(lon=lon, lat=lat)
-  
-  
+
+
   for (mod_varname in mod_variable_ls) {
     var <- ncvar_get(ncin, mod_varname)
     var[var=="NaN"]=NA
     # extract indices of closest gridcells
     j <- sapply(obs_coord$lon, function(x) which.min(abs(lon - x)))
     k <- sapply(obs_coord$lat, function(x) which.min(abs(lat - x)))
-    
+
     var_vec <- as.vector(var)
-    
+
     # extract data for all locations
     jk <- (k - 1) * nlon + j  #jk <- (j-1)*nlat + k
     var_extr <- var_vec[jk]
-    
+
     var_extr_df <- data.frame (var_extr)
     colnames(var_extr_df)[1] = "value"
     var_extr_df$ref = mod_name
     var_extr_df$var = mod_varname
     var_extr_df = cbind (obs_coord, var_extr_df)
-    
+
     #var_extra_df[ , c(var_extr_df$ref, "x1", "x3")]
     if (mod_varname == mod_variable_ls[1] & mod_name == model_ls[1]) {
       pts <- var_extr_df
@@ -178,7 +214,7 @@ for (mod_name in model_ls){
       pts <- rbind (pts, var_extr_df)
     }
   }
-  
+
 }
 nc_close(ncin)
 
@@ -204,7 +240,7 @@ data_all$lon <- as.numeric(data_all$lon)
 data_all$value <- as.numeric(data_all$value)
 data_all$var <- as.factor(data_all$var)
 data_all$ref <- factor(data_all$ref ,
-                       levels= c(rev(as.character(model_ls)), "Margo", "Tierney"))
+                       levels= c(rev(as.character(model_ls)), "Margo", "Tierney", "AH", "glomap", "kn"))
 data_all$lat_band <- factor(data_all$lat_band, levels = brk_lab[2:8])
 
 saveRDS(data_all, file = paste(datapath,"obs_mod.RDS", sep=""))
@@ -229,9 +265,9 @@ scales_x <- list(
   name = scale_x_discrete()
 )
 
-bpMod <-ggplot(na.omit(data_all), aes(x=lat_band, y=value, fill=var)) + 
+bpMod <-ggplot(na.omit(data_all), aes(x=lat_band, y=value, fill=var)) +
   geom_hline(yintercept = 0, linetype="solid", color = "black", size=0.5) +
-  geom_boxplot(aes(fill=ref),outlier.alpha = 0.8, outlier.size = 0.5, outlier.colour = "grey86", 
+  geom_boxplot(aes(fill=ref),outlier.alpha = 0.8, outlier.size = 0.5, outlier.colour = "grey86",
                width = 0.8, varwidth=F,lwd=0.2,fatten=1,position = position_dodge2(preserve = "single")) +
   theme_bw()+
   theme(axis.title.x=element_blank(),
@@ -240,21 +276,21 @@ bpMod <-ggplot(na.omit(data_all), aes(x=lat_band, y=value, fill=var)) +
         axis.text.y = element_text(angle = -90, vjust = -0.1, hjust=0.5,size=13,face="bold"),
         legend.position="left") +
   guides(fill = guide_legend(reverse = TRUE,
-                             direction = "vertical", 
+                             direction = "vertical",
                              nrow = 5,
-                             ncol = 3,
-                             label.position = "bottom", 
+                             ncol = 4,
+                             label.position = "bottom",
                              legend.box.just = "right",
                              #legend.text.align=0,
-                             label.theme = element_text(angle = -90, vjust = 0.5, hjust=0,size=10), 
+                             label.theme = element_text(angle = -90, vjust = 0.5, hjust=0,size=10),
                              title.position = "bottom", title.theme = element_text(angle = 90)))+
-  
+
   scale_x_discrete(position = "top") +
   scale_fill_manual(name = element_blank(),
-                    breaks = c(model_ls[3], model_ls[2], model_ls[1],"Margo","Tierney",
+                    breaks = c(model_ls[3], model_ls[2], model_ls[1],"Margo","Tierney","AH", "glomap", "kn",
                                model_ls[8],model_ls[7],model_ls[6],model_ls[5],model_ls[4],
                                model_ls[13],model_ls[12],model_ls[11],model_ls[10],model_ls[9]),
-                    labels = c(model_ls[3], model_ls[2], model_ls[1], "Margo","Tierney",
+                    labels = c(model_ls[3], model_ls[2], model_ls[1], "Margo","Tierney","AH", "glomap", "kn",
                                model_ls[8],model_ls[7],model_ls[6],model_ls[5],model_ls[4],
                                model_ls[13],model_ls[12],model_ls[11],model_ls[10],model_ls[9]),
                     values = colorSet) + #strange order
@@ -265,7 +301,7 @@ bpMod <-ggplot(na.omit(data_all), aes(x=lat_band, y=value, fill=var)) +
 
 #print(bpMod)
 
-ggsave(bpMod,file=paste(plotpath,"DM_boxplots/boxplot30_ocean_dataMargoTierney_model.jpg", sep=""),width=14,height=11)
+ggsave(bpMod,file=paste(plotpath,"DM_boxplots/boxplot30_ocean_dataAll_model.jpg", sep=""),width=14,height=11)
 #ggsave(bpMod,file=paste(plotpath,"DM_boxplots/boxplot_ocean_data_model.pdf", sep=""),width=11,height=14)
 
 

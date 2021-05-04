@@ -4,7 +4,7 @@
 #   'Globe':[(-90,90,'cc'),(-180,180,'cc')],
 #   Tropics':[(-30,30,'cc'),(-180,180,'cc')],
 #   NAtlEurope':[(30,50,'cc'),(-45,45,'cc')],
-#   NorthAtlantic':[(30,50,'cc'),(-60,-10,'cc')],
+#   NorthAtlantic':[(30,50,'cc'),(-60,10,'cc')],
 #   Europe':[(35,70,'cc'),(-10,60,'cc')],
 #   WesternEurope':[(35,70,'cc'),(-10,30,'cc')],
 #   NWAmerica':[(20,50,'cc'),(-125,-105,'cc')],
@@ -28,8 +28,8 @@
 source(paste(getwd(),"/LGM_Benchmarking/cfg.r", sep=""))
 
 #load observations 
-obs_file <- paste (dataobspath,'ocean_data/SST_Masa/ocean_obs_Margo.csv',sep="")
-#obs_file <- paste (dataobspath,'ocean_data/SST_Masa/ocean_obs_Tierney.csv',sep="")
+#obs_file <- paste (dataobspath,'ocean_data/SST_Masa/ocean_obs_Margo.csv',sep="")
+obs_file <- paste (dataobspath,'ocean_data/SST_Masa/ocean_obs_Tierney.csv',sep="")
 #obs_file <- paste (dataobspath,'ocean_data/SST_Masa/ocean_obs_AH.csv',sep="")
 #obs_file <- paste (dataobspath,'ocean_data/SST_Masa/ocean_obs_glomap.csv',sep="")
 #obs_file <- paste (dataobspath,'ocean_data/SST_Masa/ocean_obs_kn.csv',sep="")
@@ -38,9 +38,9 @@ obsraw <- read.csv(obs_file)
 
 #modify ref names (to short comb)
 obsraw <- obsraw %>% mutate(ref = case_when(
-  ref == "Margo_min" ~ "M_min",
-  ref == "Margo_max" ~ "M_max",
-  ref == "Margo" ~ "M",
+  ref == "Margo_min" ~ "Margo_min",
+  ref == "Margo_max" ~ "Margo_max",
+  ref == "Margo" ~ "Margo",
   ref == "Tierney_min" ~ "Tierney_min",
   ref == "Tierney_max" ~ "Tierney_max",
   ref == "Tierney"~ "Tierney",
@@ -96,7 +96,7 @@ modgrid = FALSE
 # Removed ExtraTropical Asia from the set below, as it causes an error (no data points?) 
 region_ls <- rbind(c("global", -90,90,-180,180),c("NH", 0,90,-180,180),c("NHextratropics", 30,90,-180,180),
                    c("NTropics", 0,30,-180,180),c("NAmerica", 20,50,-140,-60),
-                   c("TropicalAmericas", -30,30,-120,-35), c("WesternEurope", 35,70,-10,30), c("TropicalAsia",8,30,60,120), c("Africa",-35,35,-10,50)) %>%
+                   c("TropicalAmericas", -30,30,-120,-35), c("WesternEurope", 35,70,-10,30), c("TropicalAsia",8,30,60,120), c("Africa",-35,35,-10,50), c("TropicalOceans", -30,30,-180, 180),c("NorthAtlantic",30,50,-60,-10)) %>%
   as.data.frame (.) %>%
   dplyr::rename (reg_name = V1, min_lat = V2, max_lat = V3, min_lon = V4, max_lon = V5)
 
@@ -129,11 +129,12 @@ for (source in source_ls) {
       
       obs <-
         obs[, c(1, 2, which(colnames(obs) == mod_varname))] # select relevant variable
-      print(colnames(obs))
       #obs <-
         #obs[, c(1, 2, which(colnames(obs) == "SST_anom_ann"))] # select relevant variable
       obs <- na.omit(obs)
-      
+      print(paste(region, mod_varname, dim(obs)))
+            
+      #print(paste(region, length(obs$ocean_tas_anom)))
       ## save output ##
       comp_output = matrix(
         data = NA,

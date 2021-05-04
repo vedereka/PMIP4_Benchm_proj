@@ -49,7 +49,7 @@ cairo_pdf(
 cols <- (rev(brewer.pal(11, "RdBu")))
 title_name = 'SST_LGM (Tierney)'
 varunits = 'K'
-
+varname = "SST_LGM"
 #colbreaks
 colbreaks <- c(-3, 0, 3, 6, 9, 12, 15, 18, 20, 24, 27)
 #colbreaks <- c(seq(from = min(SST_all, na.rm = TRUE),to = max(SST_all, na.rm = TRUE),length.out = 11))
@@ -89,12 +89,13 @@ cairo_pdf(
   paste(plotpath, 'TierneyOceanplots/Tierney_SST_ANOM_LGM.pdf', sep = ""),width = 11.69,
   height = 8.27, onefile = T)
 
-cols <- (rev(brewer.pal(11, "RdBu")))
+cols <- (rev(brewer.pal(9, "RdBu")))
 title_name = 'SST_ANOM_LGM (Tierney)'
 varunits = 'K'
+varname="SST Anomaly"
 
 #colbreaks
-colbreaks <- c(-40, -20, -12, -8, -4, -2, -1, 0, 1, 2, 3)
+colbreaks <- c(seq(from = -10, to = 2, length.out = 10))
 #colbreaks <- c(seq(from = min(SST_anom, na.rm = TRUE),to = max(SST_anom, na.rm = TRUE),length.out = 11))
 print(colbreaks)
 

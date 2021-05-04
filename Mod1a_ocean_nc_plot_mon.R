@@ -173,6 +173,7 @@ period_sel <- c("LGM", "PI")
         targetSize <- c(ncin$dim$axis_3$len, ncin$dim$axis_2$len) #lon*lat
       }
       
+      print(variab)
       # get variable
       if (per == 'LGM') {
         m_LGM <- ncvar_get(ncin, variab)
@@ -245,7 +246,7 @@ period_sel <- c("LGM", "PI")
         cols <- (rev(brewer.pal(11, "RdBu")))
         varunits <- paste (variab)
         
-        # Plot land mask ------------------
+        #----- Plot land mask ------------------
         jpeg(paste(plotpath,"oceanMask_ocean_data_",model,'.jpg', sep = ""), width = 600, height = 400,quality = 75)
         x_trial <- m_mon_anom #land_mask
         cutpts <-  c(seq(from = min(x_trial, na.rm=TRUE), to = max(x_trial, na.rm=TRUE),length.out =10))
@@ -258,9 +259,9 @@ period_sel <- c("LGM", "PI")
        #--------------------------------------------- 
         
         # MAP 1: ANOMALIES
-        cairo_pdf(
-          paste(plotpath, 'mod_anom_maps/Ocean_LGM_PI_Anom_', model, '_', variab, '_', mon, '.pdf', sep = ""),width = 11.69,
-          height = 8.27, onefile = T)
+        # cairo_pdf(
+        #   paste(plotpath, 'mod_anom_maps/Ocean_LGM_PI_Anom_', model, '_', variab, '_', mon, '.pdf', sep = ""),width = 11.69,
+        #   height = 8.27, onefile = T)
 
         var_title <-paste("LGM_PI_anom. Model: ",model,". Variable: ",variab,". Month: ",mon,".",sep = "")
         
@@ -280,8 +281,19 @@ period_sel <- c("LGM", "PI")
           varunits = varunits,
           shapefile_df = shapefile_df_180
         )
+        
+        assign(paste("map_plot_SSTAnom",var_title,sep="_"),p)
+        #print(p)
+        #dev.off()
+        
+        fig <- ggarrange(get(paste("map_plot_SSTAnom", var_title, sep="_")),   ncol = 1, nrow = 1)
+        fig
+        
+        ggsave(fig,file=paste(plotpath, 'mod_anom_maps/Ocean_LGM_PI_Anom_', model, '_', variab, '_', mon, '.jpg', sep = ""),width = 11.69, height = 8.27)
         print(p)
         dev.off()
+        rm(ls="p")
+      
         
         # MAP 2: LGM
         cairo_pdf(
