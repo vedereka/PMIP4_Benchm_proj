@@ -15,7 +15,8 @@ paste("Model metadata. Created on ", Sys.Date(), sep = '')
 
 
 #list models, variables and time-slices (months)
-model_ls <-c('AWIESM1','AWIESM2','CCSM4-UofT','CESM1-2','CESM2-1','HadCM3-GLAC1D',
+
+model_ls <-c('AWIESM1','AWIESM2','CCSM4-UofT','CESM1-2','HadCM3-GLAC1D',
              'HadCM3-ICE6GC','iLOVECLIM1-1-1-GLAC-1D','iLOVECLIM1-1-1-ICE-6G-C',
              'INM-CM4-8','IPSLCM5A2','MIROC-ES2L','MPI-ESM1-2')
 
@@ -51,15 +52,6 @@ for (model in model_ls) {
         ncfname_sftgif <-
           paste(pmip_ncpath, model, '/', model, '_LGM_sftgif.nc', sep = '')
         
-        # if (model == "CESM2-1") {
-        #   ncfname_sftgif <-
-        #     paste(pmip_ncpath, 'CCSM4-UofT/CCSM4-UofT_LGM_sftgif.nc', sep = '')
-        # }
-        # else {
-        #   ncfname_sftgif <-
-        #     paste(pmip_ncpath, model, '/', model, '_LGM_sftgif.nc', sep = '')
-        # }
-        
       } else {
         ncfname <-
           paste(pmip_ncpath,model,'/',model,'_PI_moclim_',variab,'.nc',sep = '')
@@ -67,15 +59,6 @@ for (model in model_ls) {
           paste(pmip_ncpath, model, '/', model, '_PI_sftlf.nc', sep = '')
         ncfname_sftgif <-
           paste(pmip_ncpath, model, '/', model, '_PI_sftgif.nc', sep = '')
-        
-        #  if (model == "CESM2-1") {
-        #   ncfname_sftgif <-
-        #     paste(pmip_ncpath, 'CCSM4-UofT/CCSM4-UofT_PI_sftgif.nc', sep = '')
-        # }
-        # else {
-        #   ncfname_sftgif <-
-        #     paste(pmip_ncpath, model, '/', model, '_PI_sftgif.nc', sep = '')
-        # }
       }
       
       # open NetCDF files
@@ -128,7 +111,6 @@ for (model in model_ls) {
       }
       
       
-      
       # adjust longitudes so that they're -180 to 180 and ensure they're right
       lon_names <-as.numeric(ncin_sftlf[["dim"]][["lon"]][["vals"]])
       # lons should all be from -180 to 180. They need revision if 0-360.
@@ -138,15 +120,6 @@ for (model in model_ls) {
       rownames(sftlf) <- lon_names
       sftlf <- sftlf[order(as.numeric(row.names(sftlf))),]
       colnames(sftlf) <- ncin_sftlf[["dim"]][["lat"]][["vals"]]
-      
-      # This is for CESM only
-      #glacier mask without lat/lon values in CESM, using those of the land mask
-      # if (is.null(ncin_sftgif[["dim"]][["lon"]][["vals"]])) {
-      #   lon_names <- as.numeric(ncin_sftlf[["dim"]][["lon"]][["vals"]])
-      #   print("No lons in glaciation mask")
-      # } else {
-      #   lon_names <- as.numeric(ncin_sftgif[["dim"]][["lon"]][["vals"]])
-      # }
       
       lon_names <- as.numeric(ncin_sftgif[["dim"]][["lon"]][["vals"]])
       
@@ -158,18 +131,8 @@ for (model in model_ls) {
       rownames(sftgif) <- lon_names
       sftgif <- sftgif[order(as.numeric(row.names(sftgif))),]
       
-      # This is for CESM only
-      # #glacier mask without lat/lon values in CESM, using those of the land mask
-      # if (!is.null(ncin_sftgif[["dim"]][["lat"]][["vals"]])){
-      #   colnames(sftgif) <- ncin_sftgif[["dim"]][["lat"]][["vals"]]
-      # } else {
-      #   colnames(sftgif) <- ncin_sftlf [["dim"]][["lat"]][["vals"]]
-      #   print("No lats in glaciation mask")
-      # }
+      # Lats
       colnames(sftgif) <- ncin_sftgif[["dim"]][["lat"]][["vals"]]
-      
-      not_ice <- sftgif
-      not_land <- sftlf
       
       # Here we need to select only the ocean data -
       # The sftgif is ice fraction, sftlf is land fraction - remove ice sheets and land
@@ -179,33 +142,33 @@ for (model in model_ls) {
       
       ocean_mask <- ocean_mask[,order(-as.numeric(colnames(ocean_mask)))] %>% as.matrix()
       
-      if (per == "LGM") {
+      #if (per == "LGM") {
         # Print MAP 0: Ocean masks ----------------------------
-        
-        var_title <-paste("LGM_oceanmask. Model: ",model,sep = "")
-        
-        #colbreaks
-        colbreaks <- c(seq(from = 0, to = 1,length.out = 3))
-        
-        p <- plot_mtco_eg_disc(
-          mat_withlatlon = sftgif,
-          cols = cols,
-          brkpnt = colbreaks,
-          title_name = var_title,
-          varunits = varunits,
-          shapefile_df = shapefile_df_180
-        )
-        
-        assign(paste("map_plot_oceanmask",var_title,sep="_"),p)
-        
-        fig <- ggarrange(get(paste("map_plot_oceanmask", var_title, sep="_")),   ncol = 1, nrow = 1)
-        fig
-        
-        ggsave(fig,file=paste(plotpath, '/oceanplots/Ocean_mask_', model, '.jpg', sep = ""),width = 11.69, height = 8.27)
-        print(p)
-        dev.off()
-        rm(ls="p")
-      }
+      #   var_title <-paste("LGM_oceanmask. Model: ",model,sep = "")
+      #   
+      #   #colbreaks
+      #   colbreaks <- c(seq(from = 0, to = 1,length.out = 3))
+      #   print(colbreaks)
+      #   
+      #   p <- plot_mtco_eg_disc(
+      #     mat_withlatlon = ocean_mask,
+      #     cols = cols,
+      #     brkpnt = colbreaks,
+      #     title_name = var_title,
+      #     varunits = varunits,
+      #     shapefile_df = shapefile_df_180
+      #   )
+      #   
+      #   assign(paste("map_plot_oceanmask",var_title,sep="_"),p)
+      #   
+      #   fig <- ggarrange(get(paste("map_plot_oceanmask", var_title, sep="_")),   ncol = 1, nrow = 1)
+      #   fig
+      #   
+      #   ggsave(fig,file=paste(plotpath, '/oceanplots/Ocean_mask_', model, '.jpg', sep = ""),width = 11.69, height = 8.27)
+      #   print(p)
+      #   dev.off()
+      #   rm(ls="p")
+      # }
       # -------------------------------------------------------      
       if (is.null(ncin$dim$axis_3$len)) {
         targetSize <-c(ncin[["dim"]][["lon"]][["len"]], ncin[["dim"]][["lat"]][["len"]])#lon*lat
@@ -276,9 +239,10 @@ for (model in model_ls) {
       
       # create anomalies
       m_mon_anom <- m_mon_LGM_df- m_mon_PI_df
+     # print("Before plots")
       
-      # print(paste('var: ',variab,' / month: ',mon,' ->  min = ',min(anom_df, na.rm = TRUE),
-      #     ' / max = ',max(anom_df, na.rm = TRUE),sep = ""))
+      #print(paste('var: ',variab,' / month: ',mon,' ->  min = ',min(anom_df, na.rm = TRUE),
+           #' / max = ',max(anom_df, na.rm = TRUE),sep = ""))
       
       # plot on a map (3 maps: PI, LGM and anom)
       
@@ -287,9 +251,7 @@ for (model in model_ls) {
       varunits <- paste (variab)
       
       #----- Plot land mask ------------------
-      
-      
-      
+     
       
       # x_trial <- ocean_mask #ocean_mask
       # cutpts <-  c(seq(from = min(x_trial, na.rm=TRUE), to = max(x_trial, na.rm=TRUE),length.out =10))
@@ -337,11 +299,11 @@ for (model in model_ls) {
       dev.off()
       rm(ls="p")
       
-      
+#-------------------      
       # MAP 2: LGM
-      cairo_pdf(
-        paste(plotpath, 'mod_LGM_maps/Ocean_LGM_data_', model, '_', variab, '_', mon, '.pdf', sep = ""),width = 11.69,
-        height = 8.27, onefile = T)
+      # cairo_pdf(
+      #   paste(plotpath, 'mod_LGM_maps/Ocean_LGM_data_', model, '_', variab, '_', mon, '.pdf', sep = ""),width = 11.69,
+      #   height = 8.27, onefile = T)
       
       var_title <-paste("LGM_data. Model: ",model,". Variable: ",variab,". Month: ",mon,".",sep = "")
       
@@ -361,13 +323,23 @@ for (model in model_ls) {
         varunits = varunits,
         shapefile_df = shapefile_df_180
       )
+      
+      assign(paste("map_plot_SSTLGM",var_title,sep="_"),p)
+
+      
+      fig <- ggarrange(get(paste("map_plot_SSTLGM", var_title, sep="_")),   ncol = 1, nrow = 1)
+      fig
+      
+      ggsave(fig,file=paste(plotpath, 'mod_anom_maps/Ocean_LGM_', model, '_', variab, '_', mon, '.jpg', sep = ""),width = 11.69, height = 8.27)
       print(p)
       dev.off()
+      rm(ls="p")
+#---------------
       
       # MAP 3: PI
-      cairo_pdf(
-        paste(plotpath, 'mod_PI_maps/Ocean_PI_data_', model, '_', variab, '_', mon, '.pdf', sep = ""),width = 11.69,
-        height = 8.27, onefile = T)
+      # cairo_pdf(
+      #   paste(plotpath, 'mod_PI_maps/Ocean_PI_data_', model, '_', variab, '_', mon, '.pdf', sep = ""),width = 11.69,
+      #   height = 8.27, onefile = T)
       
       var_title <-paste("PI_data. Model: ",model,". Variable: ",variab,". Month: ",mon,".",sep = "")
       
@@ -387,9 +359,17 @@ for (model in model_ls) {
         varunits = varunits,
         shapefile_df = shapefile_df_180
       )
+  
+      assign(paste("map_plot_SSTPI",var_title,sep="_"),p)
+      
+      fig <- ggarrange(get(paste("map_plot_SSTPI", var_title, sep="_")),   ncol = 1, nrow = 1)
+      fig
+      
+      ggsave(fig,file=paste(plotpath, 'mod_anom_maps/Ocean_PI_', model, '_', variab, '_', mon, '.jpg', sep = ""),width = 11.69, height = 8.27)
       print(p)
       dev.off()
-      
+      rm(ls="p")
+     
       
       # save anomaly files that month/model/variable
       saveRDS(m_mon_anom, file = paste(rdspath,model,"_ocean_",variab,"_anom_",mon,".RDS", sep=""))
@@ -409,6 +389,9 @@ for (model in model_ls) {
 }
 graphics.off()
 sink()
+nc_close(ncin)
+nc_close(ncin_sftgif)
+nc_close(ncin_sftlf)
 
 # Short lines to plot the map arrays for checking purposes:
 # x_trial <- m_mon_anom #ocean_mask

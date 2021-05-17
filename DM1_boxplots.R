@@ -224,7 +224,7 @@ pts <- data.frame(lapply(pts, function(x) {gsub("mtwa_anom", "MTWA", x)}))
 pts <- data.frame(lapply(pts, function(x) {gsub("pre_anom", "MAP", x)}))
 pts <- data.frame(lapply(pts, function(x) {gsub("gdd5_anom", "GDD5", x)}))
 
-print(pts)
+#print(pts)
 #print(obs)
 data_all = rbind(obs, pts)
 

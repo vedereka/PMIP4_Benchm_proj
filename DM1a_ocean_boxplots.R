@@ -16,37 +16,6 @@
 # DM boxplots. This is a known issue of ggplot2. See:
 # https://github.com/tidyverse/ggplot2/issues/3345
 
-
-# Use Kageyama 2020 (cp-2019-169) regions:
-# ### definition of the regions: latitude range, longitude range
-#   'Globe':[(-90,90,'cc'),(-180,180,'cc')],
-#   Tropics':[(-30,30,'cc'),(-180,180,'cc')],
-#   NAtlEurope':[(30,50,'cc'),(-45,45,'cc')],
-#   NorthAtlantic':[(30,50,'cc'),(-60,-10,'cc')],
-#   Europe':[(35,70,'cc'),(-10,60,'cc')],
-#   WesternEurope':[(35,70,'cc'),(-10,30,'cc')],
-#   NWAmerica':[(20,50,'cc'),(-125,-105,'cc')],
-#   NEAmerica':[(20,50,'cc'),(-105,-50,'cc')],
-#   Africa':[(-35,35,'cc'),(-10,50,'cc'),],
-#   WestAfrica':[(5,30,'cc'),(-17,30,'cc'),],
-#   NAmerica':[(20,50,'cc'),(-140,-60,'cc'),],
-#   SHextratropics':[(-90,-30,'cc'),(-180,180,'cc')],
-#   NHextratropics':[(30,90,'cc'),(-180,180,'cc')],
-#   NTropics':[(0,30,'cc'),(-180,180,'cc')],
-#   ExtratropicalAsia':[(30,75,'cc'),(60,135,'cc')],
-#   TropicalAsia':[(8,30,'cc'),(60,120,'cc')],
-#   TropicalAmericas':[(-30,30,'cc'),(-120,-35,'cc')],
-#---------------------------------------------------------
-#---------------------------------------------------------
-# To do this by region
-# #uncomment below to run all regions at once
-region_ls <- rbind( c("global", -90,90,-180,180),c("NH", 0,90,-180,180),c("NHextratropics", 30,90,-180,180),
-                    c("NTropics", 0,30,-180,180),c("NAmerica", 20,50,-140,-60),
-                    c("TropicalAmericas", -30,30,-120,-35), c("WesternEurope", 35,70,-10,30),#c("TropicalAsia",8,30,60,120),
-                    c("ExtratropicalAsia", 30,75,60,135), c("Africa",-35,35,-10,50)) %>%
-  as.data.frame (.) %>%
-  dplyr::rename (reg_name = V1, min_lat = V2, max_lat = V3, min_lon = V4, max_lon = V5)
-
 #--------------------------------------------------------------
 #### LOAD OBSERVATIONS AND ORGANISE DATA ####  
 # files produced in Step0 extract site data
@@ -96,7 +65,7 @@ grid_glomap <- grid
 grid_glomap$ref <- "glomap"
 
 #------------------------
-# Get glomap data (also gridded)
+# Get kn data (also gridded)
 data_kn <- read.csv(file.path(dataobspath, "/ocean_data/SST_Masa/ocean_obs_kn.csv"), na.strings = "NA") %>% 
   dplyr::select (lat, lon, ocean_tas_anom, ref)
 grid <- data_glomap %>% dplyr::select (lat, lon)
@@ -105,12 +74,22 @@ grid <- data_glomap %>% dplyr::select (lat, lon)
 grid_kn <- grid
 grid_glomap$ref <- "kn"
 
+# Get Tierney gridded  data (also gridded)
+data_Tgrid <- read.csv(file.path(dataobspath, "/ocean_data/SST_Masa/ocean_obs_T_grid.csv"), na.strings = "NA") %>% 
+  dplyr::select (lat, lon, ocean_tas_anom, ref)
+grid <- data_glomap %>% dplyr::select (lat, lon)
+
+
+grid_Tgrid <- grid
+grid_Tgrid$ref <- "T_grid"
+#-----------------------------------------
 # end of data manipulation # 
+#-----------------------------------------------------------------
 #### BOXPLOT #1: only data ####
-obs <- rbind(data_Margo, data_Tierney, data_AH, data_glomap, data_kn)
+obs <- rbind(data_Margo, data_Tierney, data_AH, data_glomap, data_kn, data_Tgrid)
 # 
 #  Group the data by latitudinal bands
-brkpnt <- seq(-90, 90, by = 30)
+brkpnt <- seq(-90, 90, by = 60)
 startpnt <- brkpnt[1:length(brkpnt) - 1]
 endpnt <- brkpnt[2:length(brkpnt)]
 brk_lab <- paste(startpnt,   ' to ', endpnt, sep = '')
@@ -133,6 +112,8 @@ for (band in latband_ls) {
   write.csv(sum_obs, paste(datapath, band,"_summary_glomap.csv", sep=""))
   sum_obs = summary(obs_latband %>% filter (obs_latband$ref == "kn"))
   write.csv(sum_obs, paste(datapath, band,"_summary_kn.csv", sep=""))
+  sum_obs = summary(obs_latband %>% filter (obs_latband$ref == "T_Grid"))
+  write.csv(sum_obs, paste(datapath, band,"_summary_T_Grid.csv", sep=""))
 }
 # 
 obs2 = obs
@@ -141,7 +122,7 @@ obs <- reshape2::melt(obs, na.rm=F, id.vars = c("lat","lon","ref", "lat_band"), 
 
 
 # # undo with: dcast(obs, lat + lon + ref + lat_band ~ var, value.var = "value")
-obs$ref <- factor(obs$ref , levels=c("Margo", "Tierney", "AH", "glomap", "kn")) # reorder boxplots bottom to top
+obs$ref <- factor(obs$ref , levels=c("Margo", "Tierney", "AH", "glomap", "kn", "T_Grid")) # reorder boxplots bottom to top
 # 
 scales_y <- scale_y_continuous(breaks=scales::extended_breaks(n=4),limits=c(5,-10))
 
@@ -154,13 +135,13 @@ bp <- ggplot(na.omit(obs), aes(x=lat_band, y=value, fill=ref)) +
         axis.text.x = element_text(angle = 0, vjust = 0, hjust=0.9,face="bold"),
         axis.text.y = element_text(angle = 0, vjust = -0.1, hjust=0.5,face="bold"),
         legend.position="top",
-        legend.box = "horizontal", legend.text.align=0)+
+        legend.box = "vertical", legend.text.align=0)+
   scale_fill_manual(name = element_blank(),
-                    breaks = c('Margo', 'Tierney', 'AH', 'glomap', 'kn'),
-                    labels = c(expression('Margo', 'Tierney', 'AH', 'glomap', 'kn')),
-                    values = c('orange', 'steelblue4', 'cyan3', 'brown4', 'springgreen' )) +
+                    breaks = c('Margo', 'Tierney', 'AH', 'glomap', 'kn', 'T_Grid'),
+                    labels = c(expression('Margo', 'Tierney', 'AH', 'glomap', 'kn', 'T_Grid')),
+                    values = c('orange', 'steelblue4', 'cyan3', 'brown4', 'springgreen', 'red3')) +
   facet_grid(.~ var,scales='fixed') +
-  coord_flip()
+  #coord_flip()
 
 #print(bp)
 
@@ -187,7 +168,7 @@ for (mod_name in model_ls){
   lon <- ncin[["dim"]][["lon"]][["vals"]];nlon <- length(lon)
   grid <- expand.grid(lon=lon, lat=lat)
 
-
+# Takes only model output with data output? But multiple datasets, so not clear how this is compared in final plots
   for (mod_varname in mod_variable_ls) {
     var <- ncvar_get(ncin, mod_varname)
     var[var=="NaN"]=NA
@@ -240,7 +221,7 @@ data_all$lon <- as.numeric(data_all$lon)
 data_all$value <- as.numeric(data_all$value)
 data_all$var <- as.factor(data_all$var)
 data_all$ref <- factor(data_all$ref ,
-                       levels= c(rev(as.character(model_ls)), "Margo", "Tierney", "AH", "glomap", "kn"))
+                       levels= c(rev(as.character(model_ls)), "Margo", "Tierney", "AH", "glomap", "kn", "T_Grid"))
 data_all$lat_band <- factor(data_all$lat_band, levels = brk_lab[2:8])
 
 saveRDS(data_all, file = paste(datapath,"obs_mod.RDS", sep=""))
@@ -272,8 +253,8 @@ bpMod <-ggplot(na.omit(data_all), aes(x=lat_band, y=value, fill=var)) +
   theme_bw()+
   theme(axis.title.x=element_blank(),
         axis.title.y=element_blank(),
-        axis.text.x = element_text(angle = -90, vjust = 0, hjust=0.9,size=13,face="bold"),
-        axis.text.y = element_text(angle = -90, vjust = -0.1, hjust=0.5,size=13,face="bold"),
+        axis.text.x = element_text(angle = -90, vjust = 0, hjust=0.9,size=16,face="bold"),
+        axis.text.y = element_text(angle = -90, vjust = -0.1, hjust=0.5,size=16,face="bold"),
         legend.position="left") +
   guides(fill = guide_legend(reverse = TRUE,
                              direction = "vertical",
@@ -282,21 +263,21 @@ bpMod <-ggplot(na.omit(data_all), aes(x=lat_band, y=value, fill=var)) +
                              label.position = "bottom",
                              legend.box.just = "right",
                              #legend.text.align=0,
-                             label.theme = element_text(angle = -90, vjust = 0.5, hjust=0,size=10),
+                             label.theme = element_text(angle = -90, vjust = 0.5, hjust=0,size=16),
                              title.position = "bottom", title.theme = element_text(angle = 90)))+
 
   scale_x_discrete(position = "top") +
   scale_fill_manual(name = element_blank(),
-                    breaks = c(model_ls[3], model_ls[2], model_ls[1],"Margo","Tierney","AH", "glomap", "kn",
+                    breaks = c("Margo","Tierney","AH", "glomap", "kn","T_Grid",model_ls[3], model_ls[2], model_ls[1],
                                model_ls[8],model_ls[7],model_ls[6],model_ls[5],model_ls[4],
                                model_ls[13],model_ls[12],model_ls[11],model_ls[10],model_ls[9]),
-                    labels = c(model_ls[3], model_ls[2], model_ls[1], "Margo","Tierney","AH", "glomap", "kn",
+                    labels = c(model_ls[3], model_ls[2], model_ls[1], "Margo","Tierney","AH", "glomap", "kn","T_Grid",
                                model_ls[8],model_ls[7],model_ls[6],model_ls[5],model_ls[4],
                                model_ls[13],model_ls[12],model_ls[11],model_ls[10],model_ls[9]),
                     values = colorSet) + #strange order
   facet_grid_sc(rows=vars(var), scales = list(y = scales_y))+
   theme(strip.text.y = element_text(
-    size = 14, color = "black", face = "bold"
+    size = 20, color = "black", face = "bold"
   ))
 
 #print(bpMod)

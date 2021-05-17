@@ -37,9 +37,10 @@
 # Last modified: February 2021
 # 
 ##### SET STUFF ################################################################################
+source('region_def.R')
 
 #load observations 
-obs_file <- paste (dataobspath,'ocean_data/margo_bench_ready.csv',sep="")
+obs_file <- paste (dataobspath,'ocean_data/SST_Masa/ocean_obs_Margo.csv',sep="")
 obsraw <- read.csv(obs_file)  
 
 # obsraw$lat <- obsraw$lat+0.001 # I have to do this, otherwise one of the models does not work. No idea why!!?
@@ -58,34 +59,17 @@ mod_files_lab [[8]] <- "iLOVECLIM-GLAC" # names too long
 mod_files_lab [[9]] <- "iLOVECLIM-ICE"
 
 # variable name in model nc files
-mod_variable_ls <- c('ocean_tas_anom', 'ocean_mtco_anom','ocean_mtwa_anom') 
+mod_variable_ls <- c('ocean_tas_anom') #, 'ocean_mtco_anom','ocean_mtwa_anom') 
 #,'pre_anom','gdd5_anom')
 
 # define regions (as in Kageyama et al., 2020 CP in review)
+# Use regions as defined in region_def.R
+region_ls <- region_ls_ocean
 
-  ## uncomment below to run just one region (in this case N America)
-  # region_ls <- rbind(c("NAmerica", 20,50,-140,-60)) %>%
-  #   as.data.frame (.) %>%
-  #   dplyr::rename (reg_name = V1, min_lat = V2, max_lat = V3, min_lon = V4, max_lon = V5)
-  
-  # Removed ExtraTropical Asia from the set below, as it causes an error in the scoreplot routines (no data points?) 
-  region_ls <- rbind(c("global", -90,90,-180,180),c("NH", 0,90,-180,180),c("NHextratropics", 30,90,-180,180),
-                     c("NTropics", 0,30,-180,180),c("NAmerica", 20,50,-140,-60),
-                     c("TropicalAmericas", -30,30,-120,-35), c("WesternEurope", 35,70,-10,30), c("TropicalAsia",8,30,60,120), c("Africa",-35,35,-10,50)) %>%
-    as.data.frame (.) %>%
-    dplyr::rename (reg_name = V1, min_lat = V2, max_lat = V3, min_lon = V4, max_lon = V5)
-  
-  ## uncomment below to run all regions at once
-  # region_ls <- rbind( c("global", -90,90,-180,180),c("NH", 0,90,-180,180),c("NHextratropics", 30,90,-180,180),
-  #        c("NTropics", 0,30,-180,180),c("NAmerica", 20,50,-140,-60),
-  #        c("TropicalAmericas", -30,30,-120,-35), c("WesternEurope", 35,70,-10,30),#c("TropicalAsia",8,30,60,120),
-  #        c("ExtratropicalAsia", 30,75,60,135), c("Africa",-35,35,-10,50)) %>%
-  #   as.data.frame (.) %>%
-  #   dplyr::rename (reg_name = V1, min_lat = V2, max_lat = V3, min_lon = V4, max_lon = V5)
-
-# define source of data (CL/B)  
+# define source of data
 source_ls <- unique (obsraw$ref)
 
+source_ls <- "Margo"
 print(source_ls)
 ##### EXTRACT DATA -> CREATE AND SAVE SCATTERPLOTS ################################################################################
 
@@ -127,17 +111,18 @@ for (source in source_ls) {
       
       fig <- ggarrange(
         my_scatterplot(plot_data_ocean_tas_anom),
-        my_scatterplot(plot_data_ocean_mtco_anom),
-        my_scatterplot(plot_data_ocean_mtwa_anom),
+        #my_scatterplot(plot_data_ocean_mtco_anom),
+        #my_scatterplot(plot_data_ocean_mtwa_anom),
         #my_scatterplot(plot_data_pre_anom),
         #my_scatterplot(plot_data_gdd5_anom),
-        labels = c("tas", "mtco", "mtwa"),
+        #labels = c("tas", "mtco", "mtwa"),
+        labels = c("tas"),
         # font.label = list (size=12, face="bold"),
         label.x = 0,
         label.y = 1.028,
         align = "hv",
-        ncol = 3,
-        nrow = 2
+        ncol = 1,
+        nrow = 1
       )
       
       fig <- annotate_figure(

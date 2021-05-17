@@ -13,7 +13,7 @@ paste("Created on ", Sys.Date(), sep = '')
 
 
 #list models, variables and time-slices (months)
-model_ls <-c('AWIESM1','AWIESM2','CCSM4-UofT','CESM1-2','CESM2-1','HadCM3-GLAC1D',
+model_ls <-c('AWIESM1','AWIESM2','CCSM4-UofT','CESM1-2','HadCM3-GLAC1D',
              'HadCM3-ICE6GC','iLOVECLIM1-1-1-GLAC-1D','iLOVECLIM1-1-1-ICE-6G-C',
              'INM-CM4-8','IPSLCM5A2','MIROC-ES2L','MPI-ESM1-2')
 var_ls <- c('tas', 'pr', 'clt')
@@ -37,7 +37,7 @@ for (model in model_ls) {
       if (per == 'LGM') {
         ncfname <-
           paste(pmip_ncpath,model,'/',model,'_LGM_moclim_',variab,'.nc',sep = '')
-        if (model == "CESM2-1") { # noi sftfig in CESM2-1
+        if (model == "CESM2-1") { # no sftfig in CESM2-1
           ncfname_sftgif <-
             paste(pmip_ncpath, model, '/', model, '_LGM_sftlf.nc', sep = '')
         } else {
@@ -80,5 +80,7 @@ for (model in model_ls) {
     }
   }
 }
-
+nc_close(ncin)
+nc_close(ncin_sftgif)
+nc_close(ncin_sftlf)
 sink()

@@ -34,25 +34,33 @@ fname_ls <- append(fname_ls,ncfname_glomap)
 
 ncfname_kn <-
   paste(dataobspath, "ocean_data/SST_Masa/kurahashi-nakamura_sst_anomaly.nc", sep = '')
-
 fname_ls <- append(fname_ls,ncfname_kn)
+
+ncfname_T_Grid <-
+  paste(dataobspath, "/ocean_data/Tierney2020_DA_ocn_regrid.nc", sep = '')
+fname_ls <- append(fname_ls,ncfname_T_Grid)
 
 #---------------------------------------------------
 
-data_source_ls <- list("Margo", "Tierney", "AH", "glomap", "kn")
-varname_ls <- c("lgmanomannsst","deltaSST", "SST", "sst_anomaly", "sst_anomaly" )
+data_source_ls <- list("Margo", "Tierney", "AH", "glomap", "kn", "T_Grid")
+varname_ls <- c("lgmanomannsst","deltaSST", "SST", "sst_anomaly", "sst_anomaly", "deltaSST")
 
 names(varname_ls)  <- data_source_ls
 names(fname_ls)  <- data_source_ls
+df_means <- data.frame(means = rep(2)) 
+#df_means <- df_means %>% dplyr::mutate (Source = "null")
+                         
+count = 0
 
 for (source in data_source_ls) { 
-  
+  count <- count+1
   fname = (fname_ls[source])
   
   ncin <- nc_open(fname)
   var_name <- (varname_ls[source])
   print(var_name)
   SST <- ncvar_get(ncin, var_name)
+  # Get the simple means   
   atts <- ncatt_get(ncin, var_name)
   #print(ncin)
   #print(atts)
@@ -61,8 +69,10 @@ for (source in data_source_ls) {
   SST <- as.data.frame (SST) # na_if works with df
   SST <- SST %>% dplyr::na_if(miss_value)
   
+  #------------------------------------------------------
+  
   #------------------------------------  
-  if(source == "Tierney") {
+  if(source == "Tierney" || source == "T_Grid") {
     lon <- "lon"
     lat <- "lat"
   }
@@ -98,8 +108,7 @@ for (source in data_source_ls) {
   #-------------------------------------------
   
   # Produce output for use in benchmark code (csv)
-  print("Get the max and min values")
-  
+
   # Convert to CSV
   fout = paste("ocean_obs_", source, ".csv", sep="")
   
@@ -116,7 +125,13 @@ for (source in data_source_ls) {
   nc.df <- nc.df[c("lat","lon", "ocean_tas_anom", "ref")]
   head(nc.df)
   
-  print("Before max and min")
+  print(paste("mean",source, mean(nc.df$ocean_tas_anom, na.rm=TRUE), sep=" "))
+  
+  meanVal <- mean(nc.df$ocean_tas_anom, na.rm=TRUE)
+  df_means[nrow(df_means)+1,] <- meanVal
+  rownames(df_means)[nrow(df_means)] <- paste0(source) 
+  df_means$source <- row.names(df_means) 
+#----------------------------------------------------------  
   
   ######## Get values for Margo min and max #######
   # Need to set those values where the min and max = mean to NA 
@@ -156,17 +171,89 @@ for (source in data_source_ls) {
       r_std <- brick(fname, varname="std")
       refstd = "std"
       nc_std.df <- as.data.frame(r_std[[1]], xy=T) %>% mutate(ref = refstd) %>% `colnames<-`(c('lon','lat','ocean_tas_anom_std', 'ref'))
+      if (max(nc_std.df['lon'] > 181)) {
+        index <- nc_std.df['lon'] > 180; nc_std.df['lon'][index] <- nc_std.df['lon'][index] - 360 
+      }
       nc_std.df <- nc_std.df[c("lat","lon", "ocean_tas_anom_std","ref")]
       
-      # if nc_std.df == 0 set max and min to NA
+      
       nc_min.df <- nc_std.df %>% mutate(ref = "Tierney_min", ocean_tas_anom_std = nc.df$ocean_tas_anom - nc_std.df$ocean_tas_anom_std) %>%
         dplyr::rename (ocean_tas_anom = ocean_tas_anom_std)
       
       nc_max.df <- nc_std.df %>% mutate(ref = "Tierney_max", ocean_tas_anom_std = nc.df$ocean_tas_anom + nc_std.df$ocean_tas_anom_std) %>%
         dplyr::rename (ocean_tas_anom = ocean_tas_anom_std)
       
+      nc_min.df$ocean_tas_anom[nc_min.df$ocean_tas_anom == nc.df$ocean_tas_anom] <- NA 
+      nc_max.df$ocean_tas_anom[nc_max.df$ocean_tas_anom == nc.df$ocean_tas_anom] <- NA
       
-    } 
+  } 
+  ############ Tierney Gridded data ###############
+  else if (source == "T_Grid") {
+    print("Tierney grid max and min")
+    r_std <- brick(fname, varname="errdeltaSST")
+    refstd = "std"
+    nc_std.df <- as.data.frame(r_std[[1]], xy=T) %>% mutate(ref = refstd) %>% `colnames<-`(c('lon','lat','ocean_tas_anom_std', 'ref'))
+    if (max(nc_std.df['lon'] > 181)) {
+      index <- nc_std.df['lon'] > 180; nc_std.df['lon'][index] <- nc_std.df['lon'][index] - 360 
+    }
+    nc_std.df <- nc_std.df[c("lat","lon", "ocean_tas_anom_std","ref")]
+    
+    # if nc_std.df == 0 set max and min to NA
+    nc_min.df <- nc_std.df %>% mutate(ref = "T_Grid_min", ocean_tas_anom_std = nc.df$ocean_tas_anom - nc_std.df$ocean_tas_anom_std) %>%
+      dplyr::rename (ocean_tas_anom = ocean_tas_anom_std)
+    
+    nc_max.df <- nc_std.df %>% mutate(ref = "T_Grid_max", ocean_tas_anom_std = nc.df$ocean_tas_anom + nc_std.df$ocean_tas_anom_std) %>%
+      dplyr::rename (ocean_tas_anom = ocean_tas_anom_std)
+    
+    nc_min.df$ocean_tas_anom[nc_min.df$ocean_tas_anom == nc.df$ocean_tas_anom] <- NA 
+    nc_max.df$ocean_tas_anom[nc_max.df$ocean_tas_anom == nc.df$ocean_tas_anom] <- NA
+  } 
+  #----------------------------------------------------------
+  ############ AH data ###############
+  else if (source == "AH") {
+    print("AH grid max and min")
+    fname_std <- paste(dataobspath, "ocean_data/SST_Masa/sst_unc_AH2013.nc", sep = '')
+    r_std <- brick(fname_std, varname="SST_UNC")
+    refstd = "std"
+    nc_std.df <- as.data.frame(r_std[[1]], xy=T) %>% mutate(ref = refstd) %>% `colnames<-`(c('lon','lat','ocean_tas_anom_std', 'ref'))
+    if (max(nc_std.df['lon'] > 181)) {
+      index <- nc_std.df['lon'] > 180; nc_std.df['lon'][index] <- nc_std.df['lon'][index] - 360 
+    }
+    nc_std.df <- nc_std.df[c("lat","lon", "ocean_tas_anom_std","ref")]
+    
+    # if nc_std.df == 0 set max and min to NA
+    nc_min.df <- nc_std.df %>% mutate(ref = "AH_min", ocean_tas_anom_std = nc.df$ocean_tas_anom - nc_std.df$ocean_tas_anom_std) %>%
+      dplyr::rename (ocean_tas_anom = ocean_tas_anom_std)
+    
+    nc_max.df <- nc_std.df %>% mutate(ref = "AH_max", ocean_tas_anom_std = nc.df$ocean_tas_anom + nc_std.df$ocean_tas_anom_std) %>%
+      dplyr::rename (ocean_tas_anom = ocean_tas_anom_std)
+    
+    nc_min.df$ocean_tas_anom[nc_min.df$ocean_tas_anom == nc.df$ocean_tas_anom] <- NA 
+    nc_max.df$ocean_tas_anom[nc_max.df$ocean_tas_anom == nc.df$ocean_tas_anom] <- NA
+  } 
+  #----------------------------------------------------------
+  ############ glomap data ###############
+  else if (source == "glomap") {
+    print("glomap max and min")
+    fname_std <- paste(dataobspath, "ocean_data/SST_Masa/glomap_sst_anomaly_uncertainty.nc", sep = '')
+    r_std <- brick(fname_std, varname="sst_anomaly_uncertainty")
+    refstd = "std"
+    nc_std.df <- as.data.frame(r_std[[1]], xy=T) %>% mutate(ref = refstd) %>% `colnames<-`(c('lon','lat','ocean_tas_anom_std', 'ref'))
+    if (max(nc_std.df['lon'] > 181)) {
+      index <- nc_std.df['lon'] > 180; nc_std.df['lon'][index] <- nc_std.df['lon'][index] - 360 
+    }
+    nc_std.df <- nc_std.df[c("lat","lon", "ocean_tas_anom_std","ref")]
+    
+    # if nc_std.df == 0 set max and min to NA
+    nc_min.df <- nc_std.df %>% mutate(ref = "glomap_min", ocean_tas_anom_std = nc.df$ocean_tas_anom - nc_std.df$ocean_tas_anom_std) %>%
+      dplyr::rename (ocean_tas_anom = ocean_tas_anom_std)
+    
+    nc_max.df <- nc_std.df %>% mutate(ref = "glomap_max", ocean_tas_anom_std = nc.df$ocean_tas_anom + nc_std.df$ocean_tas_anom_std) %>%
+      dplyr::rename (ocean_tas_anom = ocean_tas_anom_std)
+    
+    nc_min.df$ocean_tas_anom[nc_min.df$ocean_tas_anom == nc.df$ocean_tas_anom] <- NA 
+    nc_max.df$ocean_tas_anom[nc_max.df$ocean_tas_anom == nc.df$ocean_tas_anom] <- NA
+  } 
     #----------------------------------------------------------
     # Default min and max values to standard where they are not available, and add to file so plot works properly
     else {
@@ -221,11 +308,19 @@ for (source in data_source_ls) {
     print(p)
     dev.off()
     rm(ls="p")
-    
+#----------------------------------------------------------------------------    
+
+#-----------------------------    
     nc_close(ncin)
     
   }  
-  
+print(colnames(df_means) )
+print(df_means)
+
+mp <- ggplot(df_means, aes(means, source)) +
+  geom_point()
+
+ggsave(mp,file=paste(plotpath,"meanplot_ocean_data",source,".jpg", sep=""),width=14,height=11)
   
   graphics.off()
   sink()

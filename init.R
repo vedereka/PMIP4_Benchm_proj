@@ -22,6 +22,7 @@ library(rgdal)
 
 # load functions 
 source('functions_source.R') #load functions and coast shapefile
+source('region_def.R')
 
 # setup paths
 # data paths, in main directory, now in gitignore (=not recorded in Git)

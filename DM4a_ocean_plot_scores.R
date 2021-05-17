@@ -39,45 +39,34 @@
 # Last modified: February 2021
 
 ##### SET STUFF ################################################################################
-
-## uncomment below to run just one region (in this case N America)
-# region_ls <- rbind(c("NAmerica", 20,50,-140,-60)) %>%
-#   as.data.frame (.) %>%
-#   dplyr::rename (reg_name = V1, min_lat = V2, max_lat = V3, min_lon = V4, max_lon = V5)
+source('region_def.R')
 
 
-## uncomment below to run all regions at once (as in Kageyama et al., 2020 CP in review)
-# region_ls <- rbind( c("global", -90,90,-180,180),c("NH", 0,90,-180,180),c("NHextratropics", 30,90,-180,180),
-#                     c("NTropics", 0,30,-180,180),c("NAmerica", 20,50,-140,-60),
-#                     c("TropicalAmericas", -30,30,-120,-35), c("WesternEurope", 35,70,-10,30),
-#                     #c("TropicalAsia",8,30,60,120),
-#                     #c("ExtratropicalAsia", 30,75,60,135), 
-#                     c("Africa",-35,35,-10,50)) %>%
-#   as.data.frame (.) %>%
-#   dplyr::rename (reg_name = V1, min_lat = V2, max_lat = V3, min_lon = V4, max_lon = V5)
+#-----------------------------------------------
+# Use regions as defined in region_def.R
+region_ls <- region_ls_ocean
 
-
-# One region removed here
-region_ls <- rbind(c("global", -90,90,-180,180),c("NH", 0,90,-180,180),c("NHextratropics", 30,90,-180,180),
-                   c("NTropics", 0,30,-180,180),c("NAmerica", 20,50,-140,-60),
-                   c("TropicalAmericas", -30,30,-120,-35), c("WesternEurope", 35,70,-10,30), c("TropicalAsia",8,30,60,120), c("Africa",-35,35,-10,50), c("TropicalOceans", -30,30,-180, 180),c("NorthAtlantic",30,50,-60,-10)) %>% as.data.frame (.) %>%
-  dplyr::rename (reg_name = V1, min_lat = V2, max_lat = V3, min_lon = V4, max_lon = V5)
-
-source_ls <- c("Tierney", "Tierney_min", "Tierney_max") 
+ 
 #source_ls <- c("Margo", "Margo_min", "Margo_max")
-#, "AH", "glomap", "kn")
+#source_ls <- c("Tierney", "Tierney_min", "Tierney_max")
+#source_ls <- c("T_Grid", "T_Grid_min", "T_Grid_max") 
+#source_ls <- c("glomap", "glomap_min", "glomap_max") 
+source_ls <- c("AH", "AH_min", "AH_max") 
+#  "kn")
 
 #source_ls <- c("kn", "kn_min", "kn_max")
 steps = c(1, 2, 3)
+
+refs <- "AH"
 
 ##### OPEN AND MANIPULATE SCORES DATA ###########################################################
 
 for (source in source_ls) {
   for (region in region_ls$reg_name) {
-    print(list.files(
-       "output_scores/Ocean",
-       pattern = paste ("*", source, "_", region, ".csv", sep = ""),
-       full.names = TRUE))
+    # print(list.files(
+    #    "output_scores/Ocean",
+    #    pattern = paste ("*", source, "_", region, ".csv", sep = ""),
+    #    full.names = TRUE))
 
     df_tbl <- #load all csv files in directory and rbind them
       list.files(
@@ -88,7 +77,7 @@ for (source in source_ls) {
       map_df( ~ read.csv(.)) %>% `colnames<-`(
         c(
           "X1","varname","mean_null","random_null","AWI1","AWI2","CCSM4",
-          "CESM12","CESM21","Had-GL","Had-IC","iLOVE-GL","iLOVE-IC",
+          "CESM12","Had-GL","Had-IC","iLOVE-GL","iLOVE-IC",
           "INM","IPSL","MIROC","MPI"
         )
       )
@@ -171,12 +160,12 @@ rm(list=ls(pattern="^df")) # clean environment
 refs_ls <- c("Margo", "Tierney") 
 #, "AH", "glomap", "kn") # min/max already used. 
 
-refs <- "Tierney"
+
 #for (refs in refs_ls) { # loop needed if more than one source (ie B and CL)
 print(refs)
 
 for (region in region_ls$reg_name) {
-  #print(region)
+  print(region)
   #print(paste ("data", refs, "max", region, sep = "_"))
   
   data <- join(
@@ -259,6 +248,7 @@ model_ls <- as.character(unique (data$model))
 #for (refs in refs_ls){ # loop needed only if more than one source (ie B and CL)
 
 for (region in region_ls$reg_name) {
+
   data <- get (paste ("df", refs, region, sep = "_"))
   data[which(data$sig == FALSE), "sig"] <- 999
   data[which(data$sig == 1), "sig"] <- 0

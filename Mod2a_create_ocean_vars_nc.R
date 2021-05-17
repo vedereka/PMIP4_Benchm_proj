@@ -9,10 +9,11 @@
 # manually stopped midway. Once it shows up, you'll need to restart R
 
 # load data and convert to vector to create a 2D array with all the months 
-model_ls <-c('AWIESM1','AWIESM2','CCSM4-UofT','CESM1-2','CESM2-1','HadCM3-GLAC1D',
-             'HadCM3-ICE6GC','iLOVECLIM1-1-1-GLAC-1D','iLOVECLIM1-1-1-ICE-6G-C',
-             'INM-CM4-8','IPSLCM5A2','MIROC-ES2L','MPI-ESM1-2')
 
+model_ls <-c('AWIESM1','AWIESM2','CCSM4-UofT','CESM1-2','HadCM3-GLAC1D',
+                          'HadCM3-ICE6GC','iLOVECLIM1-1-1-GLAC-1D','iLOVECLIM1-1-1-ICE-6G-C',
+                          'INM-CM4-8','IPSLCM5A2','MIROC-ES2L','MPI-ESM1-2')
+             
 #model_ls <-c('MIROC-ES2L')
 variab_ls <- c('tas', 'pr','clt')#, 'mtco','mtwa')
 
