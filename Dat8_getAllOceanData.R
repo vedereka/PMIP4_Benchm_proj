@@ -14,6 +14,7 @@ filename <- paste("output/", st, "ocean_obsdataMasa_metadata.txt", sep = "")
 sink(filename, split = TRUE, append = TRUE) # divert all text outputs to a file
 paste("Obs metadata. Created on ", Sys.Date(), sep = '')
 
+df_all = data.frame()
 
 ncfname_Margo <-
   paste(dataobspath, "ocean_data/SST_Masa/MARGO_data.nc", sep = '')
@@ -47,10 +48,12 @@ varname_ls <- c("lgmanomannsst","deltaSST", "SST", "sst_anomaly", "sst_anomaly",
 
 names(varname_ls)  <- data_source_ls
 names(fname_ls)  <- data_source_ls
-df_means <- data.frame(means = rep(2)) 
-#df_means <- df_means %>% dplyr::mutate (Source = "null")
+df_means <- data.frame()
+
+df_means <- df_means %>% dplyr::mutate (means = NA, Source = "null")
                          
 count = 0
+
 
 for (source in data_source_ls) { 
   count <- count+1
@@ -128,14 +131,17 @@ for (source in data_source_ls) {
   print(paste("mean",source, mean(nc.df$ocean_tas_anom, na.rm=TRUE), sep=" "))
   
   meanVal <- mean(nc.df$ocean_tas_anom, na.rm=TRUE)
-  df_means[nrow(df_means)+1,] <- meanVal
-  rownames(df_means)[nrow(df_means)] <- paste0(source) 
-  df_means$source <- row.names(df_means) 
+  df_new <- data.frame(meanVal, source) 
+  df_means <- rbind(df_means, df_new)
+  # df_means[nrow(df_means)+1,] <- meanVal
+  # rownames(df_means)[nrow(df_means)] <- paste0(source)
+  # df_means$Source <- row.names(df_means)
 #----------------------------------------------------------  
   
   ######## Get values for Margo min and max #######
   # Need to set those values where the min and max = mean to NA 
   if (source == "Margo") {
+    df_all <- nc.df
     print("Margo max and min")
     print(fname)
     r_max <- brick(fname, varname="lgmanomannmax")
@@ -269,7 +275,7 @@ for (source in data_source_ls) {
     
     write.csv(nc.df,row.names=FALSE, paste(dataobspath, "/ocean_data/SST_Masa/",fout, sep=""))
     
-    
+   
     # ---------------------------------------------------------------------  
     #print("Mapping plots")
     # MAP 1: ANOMALIES
@@ -309,18 +315,30 @@ for (source in data_source_ls) {
     dev.off()
     rm(ls="p")
 #----------------------------------------------------------------------------    
-
-#-----------------------------    
+# Put all the files together in single dataframe and single csv
+#-----------------------------
+    
+    df_all <-  rbind(df_all, nc.df) 
     nc_close(ncin)
     
   }  
-print(colnames(df_means) )
+
+
+# Write all the data out
+write.csv(df_all,row.names=FALSE, paste(dataobspath, "/ocean_data/SST_Masa/all_ocean_data.csv", sep=""))
+
+
+# Plot the means of the datasets
 print(df_means)
+mp <- ggplot(df_means, aes(meanVal, source)) +
+  geom_point(size = 10, aes(colour = factor(source))) + 
+  labs(title="Means of Ocean Datasets", y="Dataset Source", x="Global Mean Value") +
+  scale_color_discrete(name="Source") +
+  theme(plot.title=element_text(size=40,  face="bold"), axis.title.x=element_text(size=25), axis.title.y=element_text(size=25), axis.text.x=element_text(size = 15),
+        axis.text.y=element_text(size = 15),
+        legend.text = element_text(size=25),legend.title = element_text(size=30) )
 
-mp <- ggplot(df_means, aes(means, source)) +
-  geom_point()
-
-ggsave(mp,file=paste(plotpath,"meanplot_ocean_data",source,".jpg", sep=""),width=14,height=11)
+ggsave(mp,file=paste(plotpath,"/oceanplots/meanplot_ocean_data.jpg", sep=""),width=14,height=11)
   
   graphics.off()
   sink()

@@ -27,67 +27,69 @@ grid <- data_obs %>% dplyr::select (lat, lon)
 
 data_Margo <- data_obs %>%  filter(ref == "Margo") 
 
-
-#### SELECT OVERLAPPING SITES BETWEEN Margo and Tierney #### 
-# load gridcells from Margo's gridded data and filter Tierney to just that spread of data
-
 grid_Margo <- grid
 grid_Margo$ref <- "Margo"
 #------------------------
 
 # Get Tierney data (also gridded, same grid as Margo)
-data_Tierney <- read.csv(file.path(dataobspath, "/ocean_data/SST_Masa/ocean_obs_Tierney.csv"), na.strings = "NA") %>% 
+data_Tierney <- read.csv(file.path(dataobspath, "/ocean_data/SST_Masa/ocean_obs_Tierney.csv"), na.strings = "NA") %>%
   dplyr::select (lat, lon, ocean_tas_anom, ref)
 grid <- data_Tierney %>% dplyr::select (lat, lon)
 
-
 grid_Tierney <- grid
 grid_Tierney$ref <- "Tierney"
-#------------------------
-
-# Get AH data 
-data_AH <- read.csv(file.path(dataobspath, "/ocean_data/SST_Masa/ocean_obs_AH.csv"), na.strings = "NA") %>% 
+data_Tierney <- data_Tierney %>%  filter(ref == "Tierney") 
+# #------------------------
+# 
+# # Get AH data 
+data_AH <- read.csv(file.path(dataobspath, "/ocean_data/SST_Masa/ocean_obs_AH.csv"), na.strings = "NA") %>%
   dplyr::select (lat, lon, ocean_tas_anom, ref)
 grid <- data_AH %>% dplyr::select (lat, lon)
 
 
 grid_AH <- grid
 grid_AH$ref <- "AH"
-#------------------------
-
-# Get glomap data 
-data_glomap <- read.csv(file.path(dataobspath, "/ocean_data/SST_Masa/ocean_obs_glomap.csv"), na.strings = "NA") %>% 
+data_AH <- data_AH %>%  filter(ref == "AH")
+# #------------------------
+# 
+# # Get glomap data 
+data_glomap <- read.csv(file.path(dataobspath, "/ocean_data/SST_Masa/ocean_obs_glomap.csv"), na.strings = "NA") %>%
   dplyr::select (lat, lon, ocean_tas_anom, ref)
 grid <- data_glomap %>% dplyr::select (lat, lon)
 
 
 grid_glomap <- grid
 grid_glomap$ref <- "glomap"
+data_glomap <- data_glomap %>%  filter(ref == "glomap")
 
-#------------------------
-# Get kn data (also gridded)
-data_kn <- read.csv(file.path(dataobspath, "/ocean_data/SST_Masa/ocean_obs_kn.csv"), na.strings = "NA") %>% 
+# #------------------------
+# # Get kn data (also gridded)
+data_kn <- read.csv(file.path(dataobspath, "/ocean_data/SST_Masa/ocean_obs_kn.csv"), na.strings = "NA") %>%
   dplyr::select (lat, lon, ocean_tas_anom, ref)
-grid <- data_glomap %>% dplyr::select (lat, lon)
+grid <- data_kn %>% dplyr::select (lat, lon)
 
 
 grid_kn <- grid
-grid_glomap$ref <- "kn"
-
+grid_kn$ref <- "kn"
+data_kn <- data_kn %>%  filter(ref == "kn")
+#---------------------------------------------------------
 # Get Tierney gridded  data (also gridded)
-data_Tgrid <- read.csv(file.path(dataobspath, "/ocean_data/SST_Masa/ocean_obs_T_grid.csv"), na.strings = "NA") %>% 
+data_Tgrid <- read.csv(file.path(dataobspath, "/ocean_data/SST_Masa/ocean_obs_T_Grid.csv"), na.strings = "NA") %>%
   dplyr::select (lat, lon, ocean_tas_anom, ref)
-grid <- data_glomap %>% dplyr::select (lat, lon)
+grid <- data_Tgrid %>% dplyr::select (lat, lon)
 
 
 grid_Tgrid <- grid
 grid_Tgrid$ref <- "T_grid"
+data_Tgrid <- data_Tgrid %>%  filter(ref == "T_Grid")
+
 #-----------------------------------------
 # end of data manipulation # 
 #-----------------------------------------------------------------
 #### BOXPLOT #1: only data ####
 obs <- rbind(data_Margo, data_Tierney, data_AH, data_glomap, data_kn, data_Tgrid)
 # 
+
 #  Group the data by latitudinal bands
 brkpnt <- seq(-90, 90, by = 60)
 startpnt <- brkpnt[1:length(brkpnt) - 1]
@@ -96,7 +98,6 @@ brk_lab <- paste(startpnt,   ' to ', endpnt, sep = '')
 
 obs$lat_band <- cut(obs$lat, breaks = brkpnt,labels = brk_lab)
 obs = obs[!is.na(obs$lat_band),] #remove lats outside of range
-#obs <- obs[!is.na(obs$lat_band),] #remove lats outside of range
 latband_ls = (unique(obs$lat_band))
 
 #save statistical summary of each variable for each lat band
@@ -122,13 +123,13 @@ obs <- reshape2::melt(obs, na.rm=F, id.vars = c("lat","lon","ref", "lat_band"), 
 
 
 # # undo with: dcast(obs, lat + lon + ref + lat_band ~ var, value.var = "value")
-obs$ref <- factor(obs$ref , levels=c("Margo", "Tierney", "AH", "glomap", "kn", "T_Grid")) # reorder boxplots bottom to top
-# 
-scales_y <- scale_y_continuous(breaks=scales::extended_breaks(n=4),limits=c(5,-10))
+obs$ref <- factor(obs$ref , levels=c("Margo", "Tierney", "AH", "glomap","kn", "T_Grid")) # reorder boxplots bottom to top
 
-bp <- ggplot(na.omit(obs), aes(x=lat_band, y=value, fill=ref)) + 
-  geom_boxplot(aes(fill=ref),outlier.alpha = 0.5, outlier.size = 0.5, outlier.colour = "grey86",
-               width = 0.8, varwidth=F, lwd=0.01,position = position_dodge2(preserve = "single")) +
+scales_y <- scale_y_continuous(breaks=scales::extended_breaks(n=10),limits=c(5,-5))
+
+
+bplot <- ggplot(na.omit(obs), aes(x=lat_band, y=value, fill=ref)) + 
+  geom_boxplot(aes(fill=ref),outlier.alpha = 0.5, outlier.size = 0.5, outlier.colour = "grey86", width = 0.8, varwidth=F, lwd=0.01,position = position_dodge2(preserve = "single")) +
   theme_bw()+
   theme(axis.title.x=element_blank(),
         axis.title.y=element_blank(),
@@ -136,18 +137,19 @@ bp <- ggplot(na.omit(obs), aes(x=lat_band, y=value, fill=ref)) +
         axis.text.y = element_text(angle = 0, vjust = -0.1, hjust=0.5,face="bold"),
         legend.position="top",
         legend.box = "vertical", legend.text.align=0)+
-  scale_fill_manual(name = element_blank(),
-                    breaks = c('Margo', 'Tierney', 'AH', 'glomap', 'kn', 'T_Grid'),
-                    labels = c(expression('Margo', 'Tierney', 'AH', 'glomap', 'kn', 'T_Grid')),
-                    values = c('orange', 'steelblue4', 'cyan3', 'brown4', 'springgreen', 'red3')) +
-  facet_grid(.~ var,scales='fixed') +
+  scale_fill_manual(name = element_blank(), 
+                    breaks = c('Margo', 'Tierney', 'AH', 'glomap','kn', 'T_Grid'), 
+                    labels = c(expression('Margo', 'Tierney', 'AH', 'glomap','kn','T_Grid')),  
+                    values = c('orange', 'steelblue4', 'cyan3', 'brown4','springgreen', 'red3')) +
+  facet_grid(.~ var,scales='fixed')
   #coord_flip()
 
 #print(bp)
 
-# 
-ggsave(bp,file=paste(plotpath,"DM_boxplots/boxplot30_data_All.jpg", sep=""),width=12,height=7)
+ 
+ggsave(bplot,file=paste(plotpath,"DM_boxplots/boxplot60_data_All.jpg", sep=""),width=12,height=7)
 
+##################################################
 #### BOXPLOT #2: observations and model data ####
 
 mod_variable_ls <- c('ocean_tas_anom')
@@ -158,6 +160,9 @@ mod_files <- list.files(mod_dir, pattern = "anomalies", full.names = TRUE)
 
 # create list of model names for output
 model_ls <- lapply(list.files(mod_dir, pattern="anomalies", full.names = F), FUN = my_name_trim) %>% as.character (.)
+
+# Remove 'ocean' from model names so they are readable
+modNames_ls <- lapply(model_ls, FUN = ocean_name_trim) %>% as.character (.)
 
 obs_coord = unique(obs[,1:2])
 
@@ -207,11 +212,9 @@ pts <- data.frame(lapply(pts, function(x) {gsub("ocean_tas_anom", "ocean_tas_ano
 #pts <- data.frame(lapply(pts, function(x) {gsub("ocean_mtco_anom", "ocean_mtco_anom", x)}))
 #pts <- data.frame(lapply(pts, function(x) {gsub("ocean_mtwa_anom", "ocean_mtwa_anom", x)}))
 
-#pts <- data.frame(lapply(pts, function(x) {gsub("pre_anom", "MAP", x)}))
-#pts <- data.frame(lapply(pts, function(x) {gsub("gdd5_anom", "GDD5", x)}))
 
-#print(colnames(pts))
-#print(colnames(obs))
+#print(dim(pts))
+#print(dim(obs))
 data_all = rbind(obs, pts)
 
 
@@ -222,7 +225,7 @@ data_all$value <- as.numeric(data_all$value)
 data_all$var <- as.factor(data_all$var)
 data_all$ref <- factor(data_all$ref ,
                        levels= c(rev(as.character(model_ls)), "Margo", "Tierney", "AH", "glomap", "kn", "T_Grid"))
-data_all$lat_band <- factor(data_all$lat_band, levels = brk_lab[2:8])
+data_all$lat_band <- factor(data_all$lat_band, levels = brk_lab)
 
 saveRDS(data_all, file = paste(datapath,"obs_mod.RDS", sep=""))
 
@@ -236,7 +239,6 @@ require(facetscales) # install with devtools::install_github("zeehio/facetscales
 #set limits for each variable (only possible with facetscales)
 scales_y <- list(
   ocean_tas_anom = scale_y_continuous(breaks=scales::extended_breaks(n=4),limits=c(5,-30))
-  # GDD5 = scale_y_continuous(breaks=scales::extended_breaks(n=3),limits=c(1500,-4000)),
   # MAP = scale_y_continuous(breaks=scales::extended_breaks(n=5),limits=c(1500,-1500)),
   #ocean_mtco_anom = scale_y_continuous(breaks=scales::extended_breaks(n=4),limits=c(10,-20)),
   #ocean_mtwa_anom = scale_y_continuous(breaks=scales::extended_breaks(n=4),limits=c(10,-30))
@@ -258,12 +260,12 @@ bpMod <-ggplot(na.omit(data_all), aes(x=lat_band, y=value, fill=var)) +
         legend.position="left") +
   guides(fill = guide_legend(reverse = TRUE,
                              direction = "vertical",
-                             nrow = 5,
-                             ncol = 4,
+                             nrow = 4,
+                             ncol = 5,
                              label.position = "bottom",
                              legend.box.just = "right",
                              #legend.text.align=0,
-                             label.theme = element_text(angle = -90, vjust = 0.5, hjust=0,size=16),
+                             label.theme = element_text(angle = -90, vjust = 0.1, hjust=0,size=10),
                              title.position = "bottom", title.theme = element_text(angle = 90)))+
 
   scale_x_discrete(position = "top") +
@@ -271,19 +273,19 @@ bpMod <-ggplot(na.omit(data_all), aes(x=lat_band, y=value, fill=var)) +
                     breaks = c("Margo","Tierney","AH", "glomap", "kn","T_Grid",model_ls[3], model_ls[2], model_ls[1],
                                model_ls[8],model_ls[7],model_ls[6],model_ls[5],model_ls[4],
                                model_ls[13],model_ls[12],model_ls[11],model_ls[10],model_ls[9]),
-                    labels = c(model_ls[3], model_ls[2], model_ls[1], "Margo","Tierney","AH", "glomap", "kn","T_Grid",
-                               model_ls[8],model_ls[7],model_ls[6],model_ls[5],model_ls[4],
-                               model_ls[13],model_ls[12],model_ls[11],model_ls[10],model_ls[9]),
+                    labels = c(modNames_ls[3], modNames_ls[2], modNames_ls[1], "Margo","Tierney","AH", "glomap", "kn","T_Grid",
+                    modNames_ls[8],modNames_ls[7],modNames_ls[6],modNames_ls[5],modNames_ls[4],
+                    modNames_ls[13],modNames_ls[12],modNames_ls[11],modNames_ls[10],modNames_ls[9]),
                     values = colorSet) + #strange order
   facet_grid_sc(rows=vars(var), scales = list(y = scales_y))+
   theme(strip.text.y = element_text(
-    size = 20, color = "black", face = "bold"
+    size = 10, color = "black", face = "bold"
   ))
 
 #print(bpMod)
 
-ggsave(bpMod,file=paste(plotpath,"DM_boxplots/boxplot30_ocean_dataAll_model.jpg", sep=""),width=14,height=11)
-#ggsave(bpMod,file=paste(plotpath,"DM_boxplots/boxplot_ocean_data_model.pdf", sep=""),width=11,height=14)
+ggsave(bpMod,file=paste(plotpath,"DM_boxplots/boxplot60_ocean_dataAll_model.jpg", sep=""),width=14,height=14)
+
 
 
 # extract statistical summary of all variables used in the boxplot
