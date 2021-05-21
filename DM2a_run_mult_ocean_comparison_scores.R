@@ -54,7 +54,7 @@ source(paste(getwd(),"/LGM_Benchmarking/cfg.r", sep=""))
 #obs_file <- paste (dataobspath,'ocean_data/SST_Masa/ocean_obs_T_Grid.csv',sep="")
 #obs_file <- paste (dataobspath,'ocean_data/SST_Masa/ocean_obs_glomap.csv',sep="")
 
-#obs_file <- paste (dataobspath,'ocean_data/SST_Masa/ocean_obs_AH.csv',sep="")
+obs_file <- paste (dataobspath,'ocean_data/SST_Masa/ocean_obs_AH.csv',sep="")
 #obs_file <- paste (dataobspath,'ocean_data/SST_Masa/ocean_obs_kn.csv',sep="")
 
 
@@ -74,10 +74,10 @@ obsraw <- obsraw %>% mutate(ref = case_when(
   ref == "glomap" ~ "glomap",
   ref == "glomap_min" ~ "glomap_min",
   ref == "glomap_max" ~ "glomap_max",
-  ref == "kn" ~ "kn",                                                                        
+  ref == "kn" ~ "kn",                                                               
   ref == "kn_min" ~ "kn_min",
   ref == "kn_max" ~ "kn_max",
-  ref == "T_Grid" ~ "T_Grid",                                                                      
+  ref == "T_Grid" ~ "T_Grid",       
   ref == "T_Grid_min" ~ "T_Grid_min",
   ref == "T_Grid_max" ~ "T_Grid_max",
   ref == 'other' ~ 'other'
@@ -106,7 +106,7 @@ modgrid = FALSE
 # ------------------------------------------------------------
 #------------------------------------------------------------------
 # Use regions as defined in region_def.R
-region_ls <- region_ls_zonal60
+region_ls <- region_ls_ocean
 
 # define source of data
 source_ls <- unique (obsraw$ref)

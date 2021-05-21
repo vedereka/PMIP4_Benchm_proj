@@ -112,11 +112,19 @@ region_ls_zonal <- rbind(c("Global", -90,90,-180,180),
                          c("NH", 0,90,-180,180),
                          c("SH", -90,0,-180,180),
                          c("NHextratropics", 30,90,-180,180),
-                         c("SHextratropics", -30,-90,-180,180), 
+                         #c("SHextratropics", -30,-90,-180,180), 
                          c("STropics", -30,0, -180,180),
                          c("NTropics", 0,30,-180,180),
                          c("STropics23", -23,0, -180,180),
                          c("NTropics23", 0,23,-180,180)) %>%
+  as.data.frame (.) %>%
+  dplyr::rename (reg_name = V1, min_lat = V2, max_lat = V3, min_lon = V4, max_lon = V5)
+
+#------------------------------------------                     
+# 60 degree bands
+region_ls_zonal60 <- rbind(c("NExtraTrops60", 30,90,-180,180),
+                         c("Tropics60", -30,30,-180,180),
+                         c("SExtraTropics60", -90,-30,-180,180)) %>%
   as.data.frame (.) %>%
   dplyr::rename (reg_name = V1, min_lat = V2, max_lat = V3, min_lon = V4, max_lon = V5)
 #-------------------------------------------------

@@ -262,6 +262,13 @@ my_name_trim = function (x) { # used in DM3
   return (name_trim)
 }
 
+#Remove "ocean" from model names
+ocean_name_trim = function (x) { # used in DM3
+  remStr = "_ocean"
+  name_trim <- str_replace(x, remStr, "")
+  return (name_trim)
+}
+
 ##### matrixplot function for the score plotting (DM4 script)#####
 matrixplot <- function (st) {
   

@@ -71,10 +71,14 @@ for (source in source_ls) {
         ) %>%
         map_df( ~ read.csv(.)) %>% `colnames<-`(
           c(
-            "X1","varname","mean_null","random_null","AWI1","AWI2","CCSM4",
-            "CESM12","CESM21","Had-GL","Had-IC","iLOVE-GL","iLOVE-IC",
-            "INM","IPSL","MIROC","MPI"
-          )
+              "X1","varname","mean_null","random_null","AWI1","AWI2","CCSM4","Had-GL","Had-IC","iLOVE-GL","iLOVE-IC",
+              "INM","IPSL","MIROC","MPI"
+            )
+          # c(
+          #   "X1","varname","mean_null","random_null","AWI1","AWI2","CCSM4",
+          #   "CESM12","CESM21","Had-GL","Had-IC","iLOVE-GL","iLOVE-IC",
+          #   "INM","IPSL","MIROC","MPI"
+          # )
         )
     
     # chose step and prepare data

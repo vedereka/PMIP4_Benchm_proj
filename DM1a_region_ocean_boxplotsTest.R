@@ -21,14 +21,13 @@
 source('region_def.R')
 
 # Select the regions from the region_def routine
-region_ls <- region_ls_zonal
+region_ls <- region_ls_zonal60
 
 #---------------------------------------------------------------------
 #--------------------------------------------------------------
 #### LOAD OBSERVATIONS AND ORGANISE DATA ####  
 # files produced in Step0 extract site data
 
-# This Margo data is already gridded
 # This Margo data is already gridded
 data_obs <- read.csv(file.path(dataobspath, "/ocean_data/SST_Masa/ocean_obs_Margo.csv"), na.strings = "NA") %>% 
   dplyr::select (lat, lon, ocean_tas_anom, ref)
@@ -80,7 +79,7 @@ data_glomap <- data_glomap %>%  filter(ref == "glomap")
 # # Get kn data (also gridded)
 data_kn <- read.csv(file.path(dataobspath, "/ocean_data/SST_Masa/ocean_obs_kn.csv"), na.strings = "NA") %>%
   dplyr::select (lat, lon, ocean_tas_anom, ref)
-grid <- data_kn %>% dplyr::select (lat, lon)
+grid <- data_glomap %>% dplyr::select (lat, lon)
 
 
 grid_kn <- grid
@@ -92,9 +91,11 @@ data_Tgrid <- read.csv(file.path(dataobspath, "/ocean_data/SST_Masa/ocean_obs_T_
   dplyr::select (lat, lon, ocean_tas_anom, ref)
 grid <- data_glomap %>% dplyr::select (lat, lon)
 
+
 grid_Tgrid <- grid
 grid_Tgrid$ref <- "T_grid"
-data_Tgrid <- data_Tgrid %>%  filter(ref == "T_Grid")
+data_Tgrid <- data_Tgrid %>%  filter(ref == "T_grid")
+
 #-----------------------------------------
 # end of data manipulation # 
 #-----------------------------------------------------------------
@@ -105,42 +106,40 @@ obs <- rbind(data_Margo, data_Tierney, data_AH, data_glomap, data_kn, data_Tgrid
 obs <- obs %>% dplyr::mutate (Region = "global")
 
 for (region in region_ls$reg_name) {
-  print(paste(region, "obs num ", dim(obs[1]), sep=" "))
-  obs_reg <- obs %>% filter (lat >= region_ls %>% filter (reg_name == region) %>% dplyr::select(min_lat) %>% as.numeric() &
+  print(region)
+  
+  obs <- obs %>% filter (lat >= region_ls %>% filter (reg_name == region) %>% dplyr::select(min_lat) %>% as.numeric() &
                                lat <= region_ls %>% filter (reg_name == region) %>% dplyr::select(max_lat) %>% as.numeric() &
                                lon >= region_ls %>% filter (reg_name == region) %>% dplyr::select(min_lon) %>% as.numeric() &
                                lon <= region_ls %>% filter (reg_name == region) %>% dplyr::select(max_lon) %>% as.numeric()) %>% mutate(Region = region)
   
   
-  obs_reg = obs_reg[!is.na(obs$Region),] #remove lats outside of range
- 
+  #obs = obs[!is.na(obs$Region),] #remove lats outside of range
   
-  #  for (region in region_ls$reg_name) {
-  sum_obs = summary(obs_reg %>% filter(obs_reg$ref == "Margo"))
-  write.csv(sum_obs, paste(datapath, region,"_summary_Margo.csv", sep=""))
-  sum_obs = summary(obs_reg %>% filter (obs_reg$ref == "Tierney"))
-  write.csv(sum_obs, paste(datapath, region,"_summary_Tierney.csv", sep=""))
-  sum_obs = summary(obs_reg %>% filter (obs_reg$ref == "AH"))
-  write.csv(sum_obs, paste(datapath, region,"_summary_AH.csv", sep=""))
-  sum_obs = summary(obs_reg %>% filter (obs_reg$ref == "glomap"))
-  write.csv(sum_obs, paste(datapath, region,"_summary_glomap.csv", sep=""))
-  sum_obs = summary(obs_reg %>% filter (obs_reg$ref == "kn"))
-  write.csv(sum_obs, paste(datapath, region,"_summary_kn.csv", sep=""))
-  sum_obs = summary(obs_reg %>% filter (obs_reg$ref == "T_Grid"))
-  write.csv(sum_obs, paste(datapath, region,"_summary_T_Grid.csv", sep=""))
-  #  }
+  # #  for (region in region_ls$reg_name) {
+  # sum_obs = summary(obs %>% filter(obs_reg$ref == "Margo"))
+  # write.csv(sum_obs, paste(datapath, region,"_summary_Margo.csv", sep=""))
+  # sum_obs = summary(obs %>% filter (obs_reg$ref == "Tierney"))
+  # write.csv(sum_obs, paste(datapath, region,"_summary_Tierney.csv", sep=""))
+  # sum_obs = summary(obs %>% filter (obs_reg$ref == "AH"))
+  # write.csv(sum_obs, paste(datapath, region,"_summary_AH.csv", sep=""))
+  # sum_obs = summary(obs %>% filter (obs_reg$ref == "glomap"))
+  # write.csv(sum_obs, paste(datapath, region,"_summary_glomap.csv", sep=""))
+  # sum_obs = summary(obs %>% filter (obs_reg$ref == "kn"))
+  # write.csv(sum_obs, paste(datapath, region,"_summary_kn.csv", sep=""))
+  # sum_obs = summary(obs %>% filter (obs_reg$ref == "T_Grid"))
+  # write.csv(sum_obs, paste(datapath, region,"_summary_T_Grid.csv", sep=""))
+  # #  }
   
-  obs2 = obs
+  #obs2 = obs
   # 
   
-  obs_reg_reshape <- reshape2::melt(obs_reg, na.rm=F, id.vars = c("lat","lon","ref", "Region"), variable.name = "var")
+  obs <- reshape2::melt(obs, na.rm=F, id.vars = c("lat","lon","ref", "Region"), variable.name = "var")
   
   # # undo with: dcast(obs, lat + lon + ref + lat_band ~ var, value.var = "value")
-  obs_reg_reshape$ref <- factor(obs_reg$ref , levels=c("Margo", "Tierney", "AH", "glomap", "kn", "T_Grid")) # reorder boxplots bottom to top
+  obs$ref <- factor(obs$ref , levels=c("Margo", "Tierney", "AH", "glomap", "kn", "T_Grid")) # reorder boxplots bottom to top
   
-  #scales_y <- scale_y_continuous(breaks=scales::extended_breaks(n=10),limits=c(5,-5))
-  
-  bp <- ggplot(na.omit(obs_reg_reshape), aes(x=region, y=value, fill=ref)) + geom_boxplot(aes(fill=ref),outlier.alpha = 0.5, outlier.size = 0.5, outlier.colour = "grey86",
+  bp <- ggplot(na.omit(obs), aes(x=Region, y=value, fill=REF)) + geom_boxplot(aes(fill=ref),outlier.alpha = 0.5, outlier.size = 0.5, outlier.colour = "grey86",
                                                                                           width = 0.8, varwidth=F, lwd=0.01,position = position_dodge2(preserve = "single")) +
     theme_bw()+
     theme(axis.title.x=element_blank(),
@@ -153,9 +152,10 @@ for (region in region_ls$reg_name) {
                       breaks = c('Margo', 'Tierney', 'AH', 'glomap', 'kn', 'T_Grid'),
                       labels = c(expression('Margo', 'Tierney', 'AH', 'glomap', 'kn', 'T_Grid')),
                       values = c('orange', 'steelblue4', 'cyan3', 'brown4', 'springgreen', 'red3')) +
-    facet_grid(.~ var,scales='fixed') #+
-    #coord_flip()
+    facet_grid(.~ var,scales='fixed') +
+    coord_flip()
   
+  print(bp)
   
   ggsave(bp,file=paste(plotpath,"DM_boxplots/boxplot",region,"_data_All.jpg", sep=""),width=12,height=7)
   
@@ -170,8 +170,6 @@ for (region in region_ls$reg_name) {
   
   # create list of model names for output
   model_ls <- lapply(list.files(mod_dir, pattern="anomalies", full.names = F), FUN = my_name_trim) %>% as.character (.)
-  # Remove 'ocean' from model names so they are readable
-  modNames_ls <- lapply(model_ls, FUN = ocean_name_trim) %>% as.character (.)
   
   obs_coord = unique(obs[,1:2])
   
@@ -215,20 +213,20 @@ for (region in region_ls$reg_name) {
   
   
   pts <- pts %>% dplyr::mutate (Region = "global")
-
-  # pts <- pts %>% filter (lat >= region_ls %>% filter (reg_name == region) %>% dplyr::select(min_lat) %>% as.numeric() &
-  #                          lat <= region_ls %>% filter (reg_name == region) %>% dplyr::select(max_lat) %>% as.numeric() &
-  #                          lon >= region_ls %>% filter (reg_name == region) %>% dplyr::select(min_lon) %>% as.numeric() &
-  #                          lon <= region_ls %>% filter (reg_name == region) %>% dplyr::select(max_lon) %>% as.numeric()) %>% mutate(Region = region)
-  # 
+  
+  pts <- pts %>% filter (lat >= region_ls %>% filter (reg_name == region) %>% dplyr::select(min_lat) %>% as.numeric() &
+                           lat <= region_ls %>% filter (reg_name == region) %>% dplyr::select(max_lat) %>% as.numeric() &
+                           lon >= region_ls %>% filter (reg_name == region) %>% dplyr::select(min_lon) %>% as.numeric() &
+                           lon <= region_ls %>% filter (reg_name == region) %>% dplyr::select(max_lon) %>% as.numeric()) %>% mutate(Region = region)
+  
   # rename vars
   pts <- data.frame(lapply(pts, function(x) {gsub("ocean_tas_anom", "ocean_tas_anom", x)}))
   #pts <- data.frame(lapply(pts, function(x) {gsub("ocean_mtco_anom", "ocean_mtco_anom", x)}))
   #pts <- data.frame(lapply(pts, function(x) {gsub("ocean_mtwa_anom", "ocean_mtwa_anom", x)}))
   
-  #print(dim(pts))
+  print(dim(pts))
   #print(colnames(obs))
-  data_all = rbind(obs_reg_reshape, pts)
+  data_all = rbind(obs, pts)
   
   
   #----------------------------------------------------------
@@ -284,12 +282,11 @@ for (region in region_ls$reg_name) {
     
     scale_x_discrete(position = "top") +
     scale_fill_manual(name = element_blank(),
-                      breaks = c("Margo","Tierney","AH", "glomap", "kn","T_Grid",model_ls[3], model_ls[2], model_ls[1],
+                      breaks = c("Margo","Tierney","AH", "glomap", "kn","T_Grid", model_ls[3], model_ls[2], model_ls[1],
                                  model_ls[8],model_ls[7],model_ls[6],model_ls[5],model_ls[4],
                                  model_ls[13],model_ls[12],model_ls[11],model_ls[10],model_ls[9]),
-                      labels = c(modNames_ls[3], modNames_ls[2], modNames_ls[1], "Margo","Tierney","AH", "glomap", "kn","T_Grid",
-                                 modNames_ls[8],modNames_ls[7],modNames_ls[6],modNames_ls[5],modNames_ls[4],
-                                 modNames_ls[13],modNames_ls[12],modNames_ls[11],modNames_ls[10],modNames_ls[9]),
+                      labels = c("Margo","Tierney","AH", "glomap", "kn","T_Grid", model_ls[3], model_ls[2], model_ls[1],model_ls[8],model_ls[7],model_ls[6],model_ls[5],model_ls[4],
+                                 model_ls[13],model_ls[12],model_ls[11],model_ls[10],model_ls[9]),
                       values = colorSet) + #strange order
     facet_grid_sc(rows=vars(var), scales = list(y = scales_y))+
     theme(strip.text.y = element_text(
@@ -320,7 +317,7 @@ for (region in region_ls$reg_name) {
     else {
       typeVal = "model"  
     }
-    df_new <- data.frame(meanSource, meanVal, typeVal) 
+    df_new <- data.frame(meanVal, meanSource, typeVal) 
     
     df_means <- rbind(df_means, df_new)
     #print(df_means)

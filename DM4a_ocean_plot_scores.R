@@ -44,20 +44,20 @@ source('region_def.R')
 
 #-----------------------------------------------
 # Use regions as defined in region_def.R
-region_ls <- region_ls_ocean
+region_ls <- region_ls_zonal60
 
  
 #source_ls <- c("Margo", "Margo_min", "Margo_max")
 #source_ls <- c("Tierney", "Tierney_min", "Tierney_max")
 #source_ls <- c("T_Grid", "T_Grid_min", "T_Grid_max") 
 #source_ls <- c("glomap", "glomap_min", "glomap_max") 
-source_ls <- c("AH", "AH_min", "AH_max") 
+#source_ls <- c("AH", "AH_min", "AH_max") 
 #  "kn")
 
 #source_ls <- c("kn", "kn_min", "kn_max")
 steps = c(1, 2, 3)
 
-refs <- "AH"
+refs <- "Tierney"
 
 ##### OPEN AND MANIPULATE SCORES DATA ###########################################################
 
