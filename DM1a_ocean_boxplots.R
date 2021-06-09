@@ -104,17 +104,17 @@ latband_ls = (unique(obs$lat_band))
 for (band in latband_ls) {
   obs_latband <- obs %>% filter(obs$lat_band == band)
   sum_obs = summary(obs_latband %>% filter(obs_latband$ref == "Margo"))
-  write.csv(sum_obs, paste(datapath, band,"_summary_Margo.csv", sep=""))
+  write.csv(sum_obs, paste(datapath,"/ocean_output/", band,"_summary_Margo.csv", sep=""))
   sum_obs = summary(obs_latband %>% filter (obs_latband$ref == "Tierney"))
-  write.csv(sum_obs, paste(datapath, band,"_summary_Tierney.csv", sep=""))
+  write.csv(sum_obs, paste(datapath,"/ocean_output/", band,"_summary_Tierney.csv", sep=""))
   sum_obs = summary(obs_latband %>% filter (obs_latband$ref == "AH"))
-  write.csv(sum_obs, paste(datapath, band,"_summary_AH.csv", sep=""))
+  write.csv(sum_obs, paste(datapath,"/ocean_output/", band,"_summary_AH.csv", sep=""))
   sum_obs = summary(obs_latband %>% filter (obs_latband$ref == "glomap"))
-  write.csv(sum_obs, paste(datapath, band,"_summary_glomap.csv", sep=""))
+  write.csv(sum_obs, paste(datapath,"/ocean_output/", band,"_summary_glomap.csv", sep=""))
   sum_obs = summary(obs_latband %>% filter (obs_latband$ref == "kn"))
-  write.csv(sum_obs, paste(datapath, band,"_summary_kn.csv", sep=""))
+  write.csv(sum_obs, paste(datapath,"/ocean_output/", band,"_summary_kn.csv", sep=""))
   sum_obs = summary(obs_latband %>% filter (obs_latband$ref == "T_Grid"))
-  write.csv(sum_obs, paste(datapath, band,"_summary_T_Grid.csv", sep=""))
+  write.csv(sum_obs, paste(datapath,"/ocean_output/", band,"_summary_T_Grid.csv", sep=""))
 }
 # 
 obs2 = obs
@@ -142,11 +142,11 @@ bplot <- ggplot(na.omit(obs), aes(x=lat_band, y=value, fill=ref)) +
                     labels = c(expression('Margo', 'Tierney', 'AH', 'glomap','kn','T_Grid')),  
                     values = c('orange', 'steelblue4', 'cyan3', 'brown4','springgreen', 'red3')) +
   facet_grid(.~ var,scales='fixed')
-  #coord_flip()
+#coord_flip()
 
 #print(bp)
 
- 
+
 ggsave(bplot,file=paste(plotpath,"DM_boxplots/boxplot60_data_All.jpg", sep=""),width=12,height=7)
 
 ##################################################
@@ -172,27 +172,27 @@ for (mod_name in model_ls){
   lat <- ncin[["dim"]][["lat"]][["vals"]]; nlat <- length(lat)
   lon <- ncin[["dim"]][["lon"]][["vals"]];nlon <- length(lon)
   grid <- expand.grid(lon=lon, lat=lat)
-
-# Takes only model output with data output? But multiple datasets, so not clear how this is compared in final plots
+  
+  # Takes only model output with data output? But multiple datasets, so not clear how this is compared in final plots
   for (mod_varname in mod_variable_ls) {
     var <- ncvar_get(ncin, mod_varname)
     var[var=="NaN"]=NA
     # extract indices of closest gridcells
     j <- sapply(obs_coord$lon, function(x) which.min(abs(lon - x)))
     k <- sapply(obs_coord$lat, function(x) which.min(abs(lat - x)))
-
+    
     var_vec <- as.vector(var)
-
+    
     # extract data for all locations
     jk <- (k - 1) * nlon + j  #jk <- (j-1)*nlat + k
     var_extr <- var_vec[jk]
-
+    
     var_extr_df <- data.frame (var_extr)
     colnames(var_extr_df)[1] = "value"
     var_extr_df$ref = mod_name
     var_extr_df$var = mod_varname
     var_extr_df = cbind (obs_coord, var_extr_df)
-
+    
     #var_extra_df[ , c(var_extr_df$ref, "x1", "x3")]
     if (mod_varname == mod_variable_ls[1] & mod_name == model_ls[1]) {
       pts <- var_extr_df
@@ -200,7 +200,7 @@ for (mod_name in model_ls){
       pts <- rbind (pts, var_extr_df)
     }
   }
-
+  
 }
 nc_close(ncin)
 
@@ -267,15 +267,15 @@ bpMod <-ggplot(na.omit(data_all), aes(x=lat_band, y=value, fill=var)) +
                              #legend.text.align=0,
                              label.theme = element_text(angle = -90, vjust = 0.1, hjust=0,size=10),
                              title.position = "bottom", title.theme = element_text(angle = 90)))+
-
+  
   scale_x_discrete(position = "top") +
   scale_fill_manual(name = element_blank(),
                     breaks = c("Margo","Tierney","AH", "glomap", "kn","T_Grid",model_ls[3], model_ls[2], model_ls[1],
                                model_ls[8],model_ls[7],model_ls[6],model_ls[5],model_ls[4],
                                model_ls[13],model_ls[12],model_ls[11],model_ls[10],model_ls[9]),
-                    labels = c(modNames_ls[3], modNames_ls[2], modNames_ls[1], "Margo","Tierney","AH", "glomap", "kn","T_Grid",
-                    modNames_ls[8],modNames_ls[7],modNames_ls[6],modNames_ls[5],modNames_ls[4],
-                    modNames_ls[13],modNames_ls[12],modNames_ls[11],modNames_ls[10],modNames_ls[9]),
+                    labels = c("Margo","Tierney","AH", "glomap", "kn","T_Grid",model_ls[3], model_ls[2], model_ls[1],
+                               model_ls[8],model_ls[7],model_ls[6],model_ls[5],model_ls[4],
+                               model_ls[13],model_ls[12],model_ls[11],model_ls[10],model_ls[9]),
                     values = colorSet) + #strange order
   facet_grid_sc(rows=vars(var), scales = list(y = scales_y))+
   theme(strip.text.y = element_text(
@@ -286,7 +286,49 @@ bpMod <-ggplot(na.omit(data_all), aes(x=lat_band, y=value, fill=var)) +
 
 ggsave(bpMod,file=paste(plotpath,"DM_boxplots/boxplot60_ocean_dataAll_model.jpg", sep=""),width=14,height=14)
 
+# ----------- Plot the means ----------------# 
 
+# Plot the means by region as simple scatterplot ---------------------------  
+select_val_ls = c(rev(as.character(model_ls)), "Margo", "Tierney", "AH", "glomap", "kn", "T_Grid")
+
+
+df_means = data.frame()
+df_means <- df_means %>% dplyr::mutate (means = NA, Source = "null", Type="data")
+
+for (band in latband_ls) {
+  df_band <- data_all[data_all$lat_band == band, ]
+  for (meanSource in select_val_ls) {
+    
+    #print(meanSource)
+    
+    df_part <- df_band[df_band$ref == meanSource, ]
+    #df_part <- df_source[df_source$lat_band == band, ]
+    
+    meanVal <- mean(df_part$value, na.rm=TRUE)
+    #print(meanVal)
+    if (meanSource == "Margo" ||  meanSource ==  "Tierney" || meanSource ==  "AH" || meanSource ==  "glomap" ||  meanSource ==  "kn" || meanSource == "T_Grid") {
+      typeVal = "data" }
+    else {
+      typeVal = "model"  
+    }
+    df_new <- data.frame(meanSource, meanVal, typeVal) 
+    
+    df_means <- rbind(df_means, df_new)
+    #print(df_means)
+    title = paste("Means of Ocean Datasets", band, sep=" ")
+    mp <- ggplot(df_means, aes(meanVal, meanSource)) +
+      geom_point(size = 10, aes(colour = factor(meanSource), shape = factor(typeVal))) + 
+      labs(title=title, y="Source", x="Mean Value") +
+      scale_color_discrete(name="Source") + scale_shape_discrete(name="") +
+      theme(plot.title=element_text(size=40,  face="bold"), axis.title.x=element_text(size=25), axis.title.y=element_text(size=25), axis.text.x=element_text(size = 15),
+            axis.text.y=element_text(size = 15),
+            legend.text = element_text(size=25),legend.title = element_text(size=30) )
+    
+    ggsave(mp,file=paste(plotpath,"/oceanplots/mean_plots/meanLatBand_",band,"_ocean_data.jpg", sep=""),width=14,height=11)
+    
+    write.csv(df_means,row.names=FALSE, paste(datapath,"/ocean_output/mean_",band,"_ocean_data.csv", sep=""))
+  }
+}
 
 # extract statistical summary of all variables used in the boxplot
 # dlist <- c("Margo", "Tierney", as.character(model_ls))
@@ -294,7 +336,7 @@ ggsave(bpMod,file=paste(plotpath,"DM_boxplots/boxplot60_ocean_dataAll_model.jpg"
 # x1 <- data_all %>% filter (data_all$ref == i)
 # sum_obs = summary(dcast(x1, lat + lon + lat_band ~ var, value.var = "value"))
 # write.csv(sum_obs, paste(datapath, "summary_mod_boxplot_",i,".csv", sep=""))
-# }
+#}
 
 
 graphics.off()

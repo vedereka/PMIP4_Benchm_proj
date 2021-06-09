@@ -54,7 +54,6 @@ df_means <- df_means %>% dplyr::mutate (means = NA, Source = "null")
                          
 count = 0
 
-
 for (source in data_source_ls) { 
   count <- count+1
   fname = (fname_ls[source])
@@ -65,6 +64,7 @@ for (source in data_source_ls) {
   SST <- ncvar_get(ncin, var_name)
   # Get the simple means   
   atts <- ncatt_get(ncin, var_name)
+  
   #print(ncin)
   #print(atts)
   #print(dims)
@@ -83,7 +83,7 @@ for (source in data_source_ls) {
     lon <- "longitude"
     lat = "latitude"
   }
-  
+
   
   # Make it ready to plot
   if (is.null(ncin$dim$axis_3$len)) {
@@ -107,6 +107,7 @@ for (source in data_source_ls) {
   colnames(lon_names) <- "lon_180"
   rownames(SST) <- as.array(lon_names$lon_180)
   SST <- SST[order(as.numeric(row.names(SST))),]
+  
   
   #-------------------------------------------
   
@@ -133,9 +134,7 @@ for (source in data_source_ls) {
   meanVal <- mean(nc.df$ocean_tas_anom, na.rm=TRUE)
   df_new <- data.frame(meanVal, source) 
   df_means <- rbind(df_means, df_new)
-  # df_means[nrow(df_means)+1,] <- meanVal
-  # rownames(df_means)[nrow(df_means)] <- paste0(source)
-  # df_means$Source <- row.names(df_means)
+ 
 #----------------------------------------------------------  
   
   ######## Get values for Margo min and max #######
@@ -270,12 +269,52 @@ for (source in data_source_ls) {
       
     }
     #---------------------------------------------------------------------
+  # Write out the datafile with the max and min set in the refs column
     nc.df <- rbind(nc.df, nc_min.df, nc_max.df) %>%
     `colnames<-`(c("lat","lon", "ocean_tas_anom", "ref"))
     
     write.csv(nc.df,row.names=FALSE, paste(dataobspath, "/ocean_data/SST_Masa/",fout, sep=""))
+ # ------------------------------------------------------------------ 
+    if (source == "T_Grid") {   
+    # Interpolate using mean value onto 5x5 degree grid
+    data_Tgrid_temp <- data_Tgrid %>% dplyr::select (lat, lon, ocean_tas_anom, ref)
     
-   
+    coordinates(data_Tgrid_temp) <- ~ lat + lon
+    gridded(data_Tgrid_temp) <- TRUE
+    
+    raster_Tgrid <- raster(data_Tgrid_temp)
+    raster_Tgrid_temp <- aggregate(raster_Tgrid, fact = 5, Fun = mean)
+    
+    coords <- as.matrix(coordinates(raster_Tgrid_temp))
+    data_Tgrid_LR <- data.frame(lat = coords[, 1],lon = coords[, 2], 
+                                as.data.frame(raster_Tgrid_temp))
+    
+    
+    #data_Tgrid_LR <- data_Tgrid_LR %>% dplyr::mutate (ref= "T_Grid") 
+    data_Tgrid_LR$ocean_tas_anom[is.nan(data_Tgrid_LR$ocean_tas_anom)] <- NA
+    }
+    
+    #--------------------------------------------
+    if (source == "glomap") { 
+      # Interpolate using mean value onto 5x5 degree grid
+      data_glomap_temp <- data_glomap %>% dplyr::select (lat, lon, ocean_tas_anom, ref)
+      
+      coordinates(data_glomap_temp) <- ~ lat + lon
+      gridded(data_glomap_temp) <- TRUE
+      
+      raster_glomap <- raster(data_glomap_temp)
+      raster_glomap_temp <- aggregate(raster_glomap, fact = 5, Fun = mean)
+      
+      coords <- as.matrix(coordinates(raster_glomap_temp))
+      data_glomap_LR <- data.frame(lat = coords[, 1],lon = coords[, 2], 
+                                   as.data.frame(raster_glomap_temp))
+      
+      
+      #data_glomap_LR <- data_glomap_LR %>% dplyr::mutate (ref= "glomap")
+      data_glomap_LR$ocean_tas_anom[is.nan(data_glomap_LR$ocean_tas_anom)] <- NA
+    }
+    # End regridding for T_Grid and glomap
+    
     # ---------------------------------------------------------------------  
     #print("Mapping plots")
     # MAP 1: ANOMALIES
@@ -315,19 +354,17 @@ for (source in data_source_ls) {
     dev.off()
     rm(ls="p")
 #----------------------------------------------------------------------------    
-# Put all the files together in single dataframe and single csv
-#-----------------------------
-    
-    df_all <-  rbind(df_all, nc.df) 
-    nc_close(ncin)
-    
-  }  
+    df_all <-  rbind(df_all, nc.df)
 
+   nc_close(ncin)
 
+}  
+
+#Combine the data and Write it out in one file
 # Write all the data out
 write.csv(df_all,row.names=FALSE, paste(dataobspath, "/ocean_data/SST_Masa/all_ocean_data.csv", sep=""))
 
-
+# -----------------------------------------------------------------
 # Plot the means of the datasets
 print(df_means)
 mp <- ggplot(df_means, aes(meanVal, source)) +

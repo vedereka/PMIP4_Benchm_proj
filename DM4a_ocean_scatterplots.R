@@ -1,0 +1,146 @@
+# Produces scatter plots of the data/model extracted to produce the benchmarking scores in DM2
+# 
+# The definition of mod_lab will need to be adjusted to match the length of the path name 
+#   - mod_lab <- substr(mod_name, A, nchar(mod_name) - B) -> A and B are numbers
+#     that will depend on the length of the working path
+# If models are updated -> make sure that the model labels manually modifed are ok
+# 
+# Use Kageyama 2020 (cp-2019-169) regions:
+# ### definition of the regions: latitude range, longitude range
+#   'Globe':[(-90,90,'cc'),(-180,180,'cc')],
+#   Tropics':[(-30,30,'cc'),(-180,180,'cc')],
+#   NAtlEurope':[(30,50,'cc'),(-45,45,'cc')],
+#   NorthAtlantic':[(30,50,'cc'),(-60,-10,'cc')],
+#   Europe':[(35,70,'cc'),(-10,60,'cc')],
+#   WesternEurope':[(35,70,'cc'),(-10,30,'cc')],
+#   NWAmerica':[(20,50,'cc'),(-125,-105,'cc')],
+#   NEAmerica':[(20,50,'cc'),(-105,-50,'cc')],
+#   Africa':[(-35,35,'cc'),(-10,50,'cc'),],
+#   WestAfrica':[(5,30,'cc'),(-17,30,'cc'),],
+#   NAmerica':[(20,50,'cc'),(-140,-60,'cc'),],
+#   SHextratropics':[(-90,-30,'cc'),(-180,180,'cc')],
+#   NHextratropics':[(30,90,'cc'),(-180,180,'cc')],
+#   NTropics':[(0,30,'cc'),(-180,180,'cc')],
+#   ExtratropicalAsia':[(30,75,'cc'),(60,135,'cc')],
+#   TropicalAsia':[(8,30,'cc'),(60,120,'cc')],
+#   TropicalAmericas':[(-30,30,'cc'),(-120,-35,'cc')],
+# 
+# This script requires "my_scatterplot" function defined in functions_source.R 
+# and also "extractComparison" (sourced in DM2 with:
+# source(paste(getwd(),"/LGM_Benchmarking/cfg.r", sep="")) and "modgrid" 
+# (modgrid = FALSE)
+# 
+# To-do: use ggplot2::ggplot_build() instead of assign(paste("plot_data",
+# mod_varname, sep = "_"), plot_data) -> more robust
+
+# Created by Laia Comas-Bru in October 2020
+# Last modified: February 2021
+# 
+##### SET STUFF ################################################################################
+source('region_def.R')
+
+#load observations 
+obs_file <- paste (dataobspath,'ocean_data/SST_Masa/ocean_obs_Margo.csv',sep="")
+obsraw <- read.csv(obs_file)  
+
+# obsraw$lat <- obsraw$lat+0.001 # I have to do this, otherwise one of the models does not work. No idea why!!?
+# obsraw$lon <- obsraw$lon+0.001
+
+
+# location of model output
+mod_dir <- ncpath_ocean
+mod_files <- list.files(mod_dir, full.names = TRUE)
+#print(mod_files)
+# create list of model names for output
+mod_files_lab <- lapply(list.files(mod_dir, full.names = F), FUN = my_name_trim)
+mod_files_lab [[6]] <- "HadCM3-GLAC" # names too long
+mod_files_lab [[7]] <- "HadCM3-ICE"
+mod_files_lab [[8]] <- "iLOVECLIM-GLAC" # names too long
+mod_files_lab [[9]] <- "iLOVECLIM-ICE"
+
+# variable name in model nc files
+mod_variable_ls <- c('ocean_tas_anom') #, 'ocean_mtco_anom','ocean_mtwa_anom') 
+#,'pre_anom','gdd5_anom')
+
+# define regions (as in Kageyama et al., 2020 CP in review)
+# Use regions as defined in region_def.R
+region_ls <- region_ls_ocean
+
+# define source of data
+source_ls <- unique (obsraw$ref)
+
+source_ls <- "Margo"
+print(source_ls)
+##### EXTRACT DATA -> CREATE AND SAVE SCATTERPLOTS ################################################################################
+
+for (source in source_ls) {
+  for (region in region_ls$reg_name) {
+    for (mod_name in mod_files) {
+      
+      mod_lab <- substr(mod_name, 124, nchar(mod_name) - 17) # 124 will change if using a different path name
+      
+      if (mod_name == mod_files[[6]]) {mod_lab <- "Had-GLAC"}
+      if (mod_name == mod_files[[7]]) {mod_lab <- "Had-ICE"}
+      if (mod_name == mod_files[[8]]) {mod_lab <- "iLOVE-GLAC"}
+      if (mod_name == mod_files[[9]]) {mod_lab <- "iLOVE-ICE"}
+      
+      for (mod_varname in mod_variable_ls) {
+        mods <- lapply(mod_name, raster, varname = mod_varname) # for 2D netCDF files
+
+        ## filter obsraw by ref and region ##
+        obs <- obsraw %>% filter (ref == source)
+        
+        obs <- obs %>% filter (lat >= region_ls %>% filter (reg_name == region) %>% dplyr::select(min_lat) %>% as.numeric() &
+                                 lat <= region_ls %>% filter (reg_name == region) %>% dplyr::select(max_lat) %>% as.numeric() &
+                                 lon >= region_ls %>% filter (reg_name == region) %>% dplyr::select(min_lon) %>% as.numeric() &
+                                 lon <= region_ls %>% filter (reg_name == region) %>% dplyr::select(max_lon) %>% as.numeric())
+        
+        ## select relevant variable ##
+        obs <- obs[, c(1, 2, which(colnames(obs) == mod_varname))] 
+        obs <- na.omit(obs)
+        
+        obsSims <- extractComparison(mods[[1]])
+        
+        plot_data <- na.omit(as.data.frame.array(t(obsSims)))
+        print(mod_varname)
+        ## save data file for plotting (otherwise, ggarrange loses variables that are modif in loop)
+        assign(paste("plot_data",mod_varname, sep = "_"), plot_data)
+        rm(ls = "plot_data", "obs", "mods", "obsSims")
+      }
+
+      
+      fig <- ggarrange(
+        my_scatterplot(plot_data_ocean_tas_anom),
+        #my_scatterplot(plot_data_ocean_mtco_anom),
+        #my_scatterplot(plot_data_ocean_mtwa_anom),
+        #my_scatterplot(plot_data_pre_anom),
+        #my_scatterplot(plot_data_gdd5_anom),
+        #labels = c("tas", "mtco", "mtwa"),
+        labels = c("tas"),
+        # font.label = list (size=12, face="bold"),
+        label.x = 0,
+        label.y = 1.028,
+        align = "hv",
+        ncol = 1,
+        nrow = 1
+      )
+      
+      fig <- annotate_figure(
+        fig,
+        right = text_grob(paste (mod_lab),x = -1,y = 0.4,face = "bold",size = 14),
+        bottom = text_grob(
+          paste ("Obs vs Sim (prior to scores) \n Source: ", source, "\n Region: ",region, sep = ""),
+          y = 3.5,x = 0.88,face = "italic",size = 12),
+        top = text_grob(" ", color = "green", rot = 90),
+      )
+      
+      ggsave(
+        fig,
+        file = paste(plotpath,"DM_scatterplots/",source,"_",region,"_",mod_lab,
+                     "_scatterplot.jpg", sep = ""),
+        width = 11.69,height = 8.27)
+    }
+  }
+}
+
+graphics.off()

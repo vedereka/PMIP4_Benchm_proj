@@ -1,0 +1,310 @@
+### produce data only and data-model latitudinal boxplots
+#
+# Statistical summaries of all variables are saved in output/
+# These are the things that will require checking if the models are updated:
+# - model_ls: Are model names correctly trimmed?
+# - scales_y: are limits still valid?
+# - guide_legend nrow and ncol: do they need to be updated?
+# - breaks and levels in scale_fill_manual (note that the order is strange)
+# - colorSet to match the number of models (and the order)
+
+# Created by Laia Comas-Bru in October 2020
+# Last modified: February 2021
+
+# Still to-do: Haven't been able to keep empty spaces for missing data in the
+# DM boxplots. This is a known issue of ggplot2. See:
+# https://github.com/tidyverse/ggplot2/issues/3345
+
+#---------------------------------------------------------
+
+# To do this by region - These are not ocean regions
+source('region_def.R')
+
+# Select the regions from the region_def routine
+region_ls <- region_ls_zonal
+
+#---------------------------------------------------------------------
+#--------------------------------------------------------------
+#### LOAD OBSERVATIONS AND ORGANISE DATA ####
+# files produced in Step0 extract site data
+
+# This Margo data is already gridded
+# This Margo data is already gridded
+data_Margo <- read.csv(file.path(dataobspath, "/ocean_data/SST_Masa/ocean_obs_Margo.csv"), na.strings = "NA") %>%
+  dplyr::select (lat, lon, ocean_tas_anom, ref)
+grid <- data_Margo %>% dplyr::select (lat, lon)
+
+data_Margo <- data_Margo %>%  filter(ref == "Margo")
+
+grid_Margo <- grid
+grid_Margo$ref <- "Margo"
+
+grid_Margo <- grid
+grid_Margo$ref <- "Margo"
+#------------------------
+
+# Get Tierney data (also gridded, same grid as Margo)
+data_Tierney <- read.csv(file.path(dataobspath, "/ocean_data/SST_Masa/ocean_obs_Tierney.csv"), na.strings = "NA") %>%
+  dplyr::select (lat, lon, ocean_tas_anom, ref)
+grid <- data_Tierney %>% dplyr::select (lat, lon)
+
+grid_Tierney <- grid
+grid_Tierney$ref <- "Tierney"
+data_Tierney <- data_Tierney %>%  filter(ref == "Tierney")
+# #------------------------
+#
+# # Get AH data
+data_AH <- read.csv(file.path(dataobspath, "/ocean_data/SST_Masa/ocean_obs_AH.csv"), na.strings = "NA") %>%
+  dplyr::select (lat, lon, ocean_tas_anom, ref)
+grid <- data_AH %>% dplyr::select (lat, lon)
+
+
+grid_AH <- grid
+grid_AH$ref <- "AH"
+data_AH <- data_AH %>%  filter(ref == "AH")
+# #------------------------
+#
+# # Get glomap data
+data_glomap <- read.csv(file.path(dataobspath, "/ocean_data/SST_Masa/ocean_obs_glomap.csv"), na.strings = "NA") %>%
+  dplyr::select (lat, lon, ocean_tas_anom, ref)
+grid <- data_glomap %>% dplyr::select (lat, lon)
+
+
+grid_glomap <- grid
+grid_glomap$ref <- "glomap"
+data_glomap <- data_glomap %>%  filter(ref == "glomap")
+
+# #------------------------
+# # Get kn data (also gridded)
+data_kn <- read.csv(file.path(dataobspath, "/ocean_data/SST_Masa/ocean_obs_kn.csv"), na.strings = "NA") %>%
+  dplyr::select (lat, lon, ocean_tas_anom, ref)
+grid <- data_kn %>% dplyr::select (lat, lon)
+
+
+grid_kn <- grid
+grid_kn$ref <- "kn"
+data_kn <- data_kn %>%  filter(ref == "kn")
+#---------------------------------------------------------
+# Get Tierney gridded  data (also gridded)
+data_Tgrid <- read.csv(file.path(dataobspath, "/ocean_data/SST_Masa/ocean_obs_T_Grid.csv"), na.strings = "NA") %>%
+  dplyr::select (lat, lon, ocean_tas_anom, ref)
+grid <- data_Tgrid %>% dplyr::select (lat, lon)
+
+grid_Tgrid <- grid
+grid_Tgrid$ref <- "T_grid"
+data_Tgrid <- data_Tgrid %>%  filter(ref == "T_Grid")
+#-----------------------------------------
+# end of data manipulation #
+#-----------------------------------------------------------------
+#### BOXPLOT #1: only data ####
+data_ls <- list(data_Margo, data_Tierney, data_AH, data_glomap, data_kn, data_Tgrid)
+
+obs <- rbind(data_Margo, data_Tierney, data_AH, data_glomap, data_kn, data_Tgrid)
+
+obs <- obs %>% dplyr::mutate (Region = "global")
+
+for (region in region_ls$reg_name) {
+  obs_reg <- obs %>% filter (lat >= region_ls %>% filter (reg_name == region) %>% dplyr::select(min_lat) %>% as.numeric() &
+                               lat <= region_ls %>% filter (reg_name == region) %>% dplyr::select(max_lat) %>% as.numeric() &
+                               lon >= region_ls %>% filter (reg_name == region) %>% dplyr::select(min_lon) %>% as.numeric() &
+                               lon <= region_ls %>% filter (reg_name == region) %>% dplyr::select(max_lon) %>% as.numeric()) %>% mutate(Region = region)
+  
+  
+  obs_reg = obs_reg[!is.na(obs$Region),] #remove lats outside of range
+  #print(paste(region, "obs num ", dim(obs_reg), sep=" "))
+  
+  data_source_ls <- (unique(obs_reg$ref))
+  for (source in data_source_ls) {
+    sum_obs_data = summary(obs_reg %>% filter(obs_reg$ref == source))
+    write.csv(sum_obs_data, paste(datapath,"/ocean_output/", region,"_summary_",source,".csv", sep=""))
+  }
+  
+  obs_reg_reshape <- reshape2::melt(obs_reg, na.rm=F, id.vars = c("lat","lon","ref", "Region"), variable.name = "var")
+  
+  # # undo with: dcast(obs, lat + lon + ref + lat_band ~ var, value.var = "value")
+ 
+  
+  #######################################################
+  #### Means #2: observations and model data ####
+  
+  mod_variable_ls <- c('ocean_tas_anom')
+  model_means <- data.frame()
+  model_means <- model_means %>% dplyr::mutate (modName = NA, mean = NA, data=NA)
+  
+  # location of model output
+  mod_dir <- ncpath_ocean
+  mod_files <- list.files(mod_dir, pattern = "anomalies", full.names = TRUE)
+  
+  # create list of model names for output
+  model_ls <- lapply(list.files(mod_dir, pattern="anomalies", full.names = F), FUN = my_name_trim) %>% as.character (.)
+  # Remove 'ocean' from model names so they are readable
+  modNames_ls <- lapply(model_ls, FUN = ocean_name_trim) %>% as.character (.)
+  print(modNames_ls)
+  # This decides the grid the model points are matching I think - but is not excluding missing points here?
+  grid_ls <- list(grid_Margo, grid_Tierney, grid_AH, grid_glomap, grid_kn, grid_Tgrid)
+  
+   for (source_data in data_ls) {
+    source <- unique(source_data$ref)
+    #source_data <- obs_reg %>% filter(obs_reg$ref == source)
+    print(source)
+    coordName <- source
+    #print(source_data)
+    have_data <- source_data[!is.na(source_data$ocean_tas_anom), ]
+    print(dim(have_data))
+    obs_coord <- unique(have_data[,1:2])
+    #print(obs_coord)
+    #grid <- unique(obs_reg[,1:2])
+    
+    for (mod_name in model_ls){
+      ncname <- paste(ncpath_ocean, mod_name, "_LGM_anomalies.nc",sep="")
+      ncin <- nc_open(ncname)
+      lat <- ncin[["dim"]][["lat"]][["vals"]]; nlat <- length(lat)
+      lon <- ncin[["dim"]][["lon"]][["vals"]];nlon <- length(lon)
+      grid_model <- expand.grid(lon=lon, lat=lat)
+      #print(mod_name)
+      #print(dim(grid_model))
+#----------------------------------------------
+      
+      
+      for (mod_varname in mod_variable_ls) {
+        var <- ncvar_get(ncin, mod_varname)
+        var[var=="NaN"]=NA
+        # extract indices of closest gridcells
+        j <- sapply(obs_coord$lon, function(x) which.min(abs(lon - x)))
+        k <- sapply(obs_coord$lat, function(x) which.min(abs(lat - x)))
+        
+        var_vec <- as.vector(var)
+    
+        # extract data for all locations
+        jk <- (k - 1) * nlon + j  #jk <- (j-1)*nlat + k
+        var_extr <- var_vec[jk]
+        
+        var_extr_df <- data.frame (var_extr)
+        colnames(var_extr_df)[1] = "value"
+        var_extr_df$ref = mod_name
+        var_extr_df$var = mod_varname
+        var_extr_df = cbind (obs_coord, var_extr_df)
+        
+        #var_extra_df[ , c(var_extr_df$ref, "x1", "x3")]
+        if (mod_varname == mod_variable_ls[1] & mod_name == model_ls[1]) {
+          pts <- var_extr_df
+        } else {
+          pts <- rbind (pts, var_extr_df)
+        }
+      }
+      
+    }
+    nc_close(ncin)
+    
+    #------------------------------------     
+    
+    pts <- pts %>% dplyr::mutate (Region = "global")
+    
+    pts <- pts %>% filter (lat >= region_ls %>% filter (reg_name == region) %>% dplyr::select(min_lat) %>% as.numeric() &
+                             lat <= region_ls %>% filter (reg_name == region) %>% dplyr::select(max_lat) %>% as.numeric() &
+                             lon >= region_ls %>% filter (reg_name == region) %>% dplyr::select(min_lon) %>% as.numeric() &
+                             lon <= region_ls %>% filter (reg_name == region) %>% dplyr::select(max_lon) %>% as.numeric()) %>% mutate(Region = region)
+    #
+    # rename vars
+    pts <- data.frame(lapply(pts, function(x) {gsub("ocean_tas_anom", "ocean_tas_anom", x)}))
+    
+    modpts_ls <- (unique(pts$ref))
+    
+    # Get just the model means and plots them
+    for (mod_name in modpts_ls) {
+      pts$value <- as.numeric(as.character(pts$value))
+      pts_select <- pts %>% filter(pts$ref == mod_name)
+      sum_obs_pts = summary(pts_select)
+      write.csv(sum_obs_pts, paste(datapath,"/ocean_output/",mod_name,"_",coordName,"_", region,"_stat.csv", sep=""))
+      meanVal <- mean(pts_select$value, na.rm=TRUE)
+      df_new <- data.frame(mod_name, meanVal, coordName)
+      model_means <- rbind(model_means, df_new)  
+      #print(paste(mod_name, meanVal, coordName, sep=" "))
+    }
+}
+    
+    # Plot just the model means
+    title = paste("Means of Models", "\n",region, sep=" ")
+    mp <- ggplot(model_means, aes(meanVal, mod_name)) +
+      geom_point(size = 10, aes(colour = factor(mod_name))) +
+      labs(title=title) + #, y="Model", x="Mean Value") +
+      scale_color_discrete(name="Model") + scale_shape_discrete(name="") +
+      theme(plot.title=element_text(size=40,  face="bold"), axis.title.x=element_text(size=25), axis.title.y=element_text(size=25), axis.text.x=element_text(size = 15),
+            axis.text.y=element_text(size = 15),
+            legend.text = element_text(size=25),legend.title = element_text(size=30) )
+    
+    ggsave(mp,file=paste(plotpath,"/mean_plots/Models_",coordName,"_", region,".jpg", sep=""),width=14,height=11)
+    
+    #------ Write model means to CSV -----
+    write.csv(model_means,row.names=FALSE, paste(datapath,"ocean_output/Modelmean_",region,"_ocean.csv", sep=""))
+    #----------------------------------------------------------
+    data_all = rbind(obs_reg_reshape, pts)
+    
+    data_all$lat <- as.numeric(data_all$lat)
+    data_all$lon <- as.numeric(data_all$lon)
+    data_all$value <- as.numeric(data_all$value)
+    data_all$var <- as.factor(data_all$var)
+    data_all$ref <- factor(data_all$ref ,
+                           levels= c(rev(as.character(model_ls)), "Margo", "Tierney", "AH", "glomap", "kn", "T_Grid"))
+    #data_all$region <- factor(data_all$region, levels = brk_lab[2:8])
+    
+    saveRDS(data_all, file = paste(datapath,"obs_mod",region,".RDS", sep=""))
+    
+    require (randomcoloR) # ColorBrewer max length is 12, we need 13 + 2 grey
+    # color palette in the right order
+    n <- length(unique(data_all$ref)) %>%  distinctColorPalette(.)
+    
+  #} 
+ 
+} 
+  # ----------- Plot the means ----------------#
+  
+  
+  # Plot the means by region as simple scatterplot ---------------------------
+  # select_val_ls = c(rev(as.character(model_ls)), "Margo", "Tierney", "AH", "glomap", "kn", "T_Grid")
+  # 
+  # df_means = data.frame()
+  # df_means <- df_means %>% dplyr::mutate (means = NA, Source = "null", typeVal="data")
+  # for (meanSource in select_val_ls) {
+  #   count=1
+  #   #print(meanSource)
+  #   df_part <- data_all[data_all$ref == meanSource, ]
+  #   
+  #   meanVal <- mean(df_part$value, na.rm=TRUE)
+  #   #print(meanVal)
+  #   if (meanSource == "Margo" ||  meanSource ==  "Tierney" || meanSource ==  "AH" || meanSource ==  "glomap" ||  meanSource ==  "kn" || meanSource == "T_Grid") {
+  #     typeVal = "data" }
+  #   else {
+  #     typeVal = "model"
+  #   }
+  #   df_new <- data.frame(meanSource, meanVal, typeVal)
+  #   
+  #   df_means <- rbind(df_means, df_new)
+  #   #print(df_means)
+  #   title = paste("Means of Ocean Datasets", "\n",region, sep=" ")
+  #   mp <- ggplot(df_means, aes(meanVal, meanSource)) +
+  #     geom_point(size = 10, aes(colour = factor(meanSource), shape = factor(typeVal))) +
+  #     labs(title=title, y="Source", x="Mean Value") +
+  #     scale_color_discrete(name="Source") + scale_shape_discrete(name="") +
+  #     theme(plot.title=element_text(size=40,  face="bold"), axis.title.x=element_text(size=25), axis.title.y=element_text(size=25), axis.text.x=element_text(size = 15),
+  #           axis.text.y=element_text(size = 15),
+  #           legend.text = element_text(size=25),legend.title = element_text(size=30) )
+  #   
+  #   ggsave(mp,file=paste(plotpath,"/mean_plots/mean_",region,"_ocean_data.jpg", sep=""),width=14,height=11)
+  #   
+  #   write.csv(df_means,row.names=FALSE, paste(datapath,"/ocean_output/mean_obsTGrid",region,"_ocean_data.csv", sep=""))
+  #   
+  #}
+  
+  # ------------------------------------------------------------
+  # extract statistical summary of all variables used in the boxplot
+  # dlist <- c("Margo", "Tierney", as.character(model_ls))
+  # for (i in dlist){
+  # x1 <- data_all %>% filter (data_all$ref == i)
+  # sum_obs = summary(dcast(x1, lat + lon + lat_band ~ var, value.var = "value"))
+  # write.csv(sum_obs, paste(datapath, "summary_mod_boxplot_",i,".csv", sep=""))
+  #rm(ls=obs_reg, pts)
+  
+  
+  
+  graphics.off()

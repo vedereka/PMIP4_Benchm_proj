@@ -63,9 +63,9 @@ region_ls_NAm <- rbind(c("NAmerica", 20,50,-140,-60)) %>%
   dplyr::rename (reg_name = V1, min_lat = V2, max_lat = V3, min_lon = V4, max_lon = V5)
 
 #-------------------------------------------
-#All regions from Kagemaya 2020
+#All Land regions from Kagemaya 2020
 
-region_ls_all <- rbind( c("global", -90,90,-180,180),c("NH", 0,90,-180,180),c("NHextratropics", 30,90,-180,180),
+region_ls_Landall <- rbind( c("global", -90,90,-180,180),c("NH", 0,90,-180,180),c("NHextratropics", 30,90,-180,180),
        c("NTropics", 0,30,-180,180),c("NAmerica", 20,50,-140,-60),
        c("TropicalAmericas", -30,30,-120,-35), c("WesternEurope", 35,70,-10,30),c("TropicalAsia",8,30,60,120),
        c("ExtratropicalAsia", 30,75,60,135), c("Africa",-35,35,-10,50)) %>%
@@ -112,7 +112,7 @@ region_ls_zonal <- rbind(c("Global", -90,90,-180,180),
                          c("NH", 0,90,-180,180),
                          c("SH", -90,0,-180,180),
                          c("NHextratropics", 30,90,-180,180),
-                         #c("SHextratropics", -30,-90,-180,180), 
+                         c("SHextratropics", -30,-90,-180,180), 
                          c("STropics", -30,0, -180,180),
                          c("NTropics", 0,30,-180,180),
                          c("STropics23", -23,0, -180,180),
@@ -129,9 +129,8 @@ region_ls_zonal60 <- rbind(c("NExtraTrops60", 30,90,-180,180),
   dplyr::rename (reg_name = V1, min_lat = V2, max_lat = V3, min_lon = V4, max_lon = V5)
 #-------------------------------------------------
 # Three region test bands
-region_ls_test <- rbind(c("NorthAtlantic",30,50,-60,-10), 
-                        c("MidAtlantic",10,30,-90,25),
-                        c("SAtlantic",-50,10,-70,15)) %>%
+region_ls_Masa <- rbind(c("NorthAtlantic",30,50,-60,-10), 
+                        c("TropicalOceans",-30,30,-180,180)) %>%
   as.data.frame (.) %>%
   dplyr::rename (reg_name = V1, min_lat = V2, max_lat = V3, min_lon = V4, max_lon = V5)
 

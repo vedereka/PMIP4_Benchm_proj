@@ -3,29 +3,29 @@
 # Boxplot #2: Bartlein (B), all Cleator data (CL_all) and model data
 # Statistical summaries of all variables are saved in output/
 # These are the things that will require checking if the models are updated:
-  # - model_ls: Are model names correctly trimmed?
-  # - scales_y: are limits still valid?
-  # - guide_legend nrow and ncol: do they need to be updated?
-  # - breaks and levels in scale_fill_manual (note that the order is strange)
-  # - colorSet to match the number of models (and the order)
+# - model_ls: Are model names correctly trimmed?
+# - scales_y: are limits still valid?
+# - guide_legend nrow and ncol: do they need to be updated?
+# - breaks and levels in scale_fill_manual (note that the order is strange)
+# - colorSet to match the number of models (and the order)
 
 # Created by Laia Comas-Bru in October 2020
 # Last modified: February 2021
 
-# Still to-do: Haven't been able to keep empty spaces for missing data in the 
+# Still to-do: Haven't been able to keep empty spaces for missing data in the
 # DM boxplots. This is a known issue of ggplot2. See:
 # https://github.com/tidyverse/ggplot2/issues/3345
 
-#### LOAD OBSERVATIONS AND ORGANISE DATA ####  
+#### LOAD OBSERVATIONS AND ORGANISE DATA ####
 # files produced in Step0 extract site data
-data_obs <- read.csv(file.path(dataobspath, "data_obs_raw.csv"), na.strings = "NA",strip.white = TRUE, blank.lines.skip = T) %>% 
+data_obs <- read.csv(file.path(dataobspath, "data_obs_raw.csv"), na.strings = "NA",strip.white = TRUE, blank.lines.skip = T) %>%
   dplyr::rename (LAT = lat, LON = lon) %>%  dplyr::select (LAT, LON, MAT, MTCO, MTWA, MAP, REF)
-                     
-data_BarPre <- data_obs %>%  filter (REF == "B_wf" | REF == "PR_all") 
-  
+
+data_BarPre <- data_obs %>%  filter (REF == "B_wf" | REF == "PR_all")
+
 data_Cle <- data_obs %>%  filter (REF == "CL_all_244") # use most recent Cleator dataset
 
-#### SELECT OVERLAPPING SITES BETWEEN BARTLEIN GRIDS AND CLEATOR #### 
+#### SELECT OVERLAPPING SITES BETWEEN BARTLEIN GRIDS AND CLEATOR ####
 # load gridcells from Bartlein's gridded data and filter Cleator to just that spread of data
 ncfname <-  paste (dataobspath, "raw_data/mat_delta_21ka_ALL_grid_2x2.nc",sep="")
 ncin <- nc_open(ncfname)
@@ -103,7 +103,7 @@ rm(ls="n","x_temp","newx","grid")
 grid_Cle$REF <- "CL"
 grid_BartPren$REF <- "BP"
 
-# end of data manipulation # 
+# end of data manipulation #
 #### BOXPLOT #1: only data ####
 ## comparisons for gridded overlapping data sources
 dtBP <- grid_BartPren [, -c(3:7)]
@@ -115,7 +115,7 @@ dtCL_all$REF <- "CL_all"
 obs <- rbind(dtBP, dtCL, dtCL_all)
 
 # Group the data by latitudinal bands
-brkpnt <- seq(-80, 80, by = 20)
+brkpnt <- seq(-90, 90, by = 60)
 startpnt <- brkpnt[1:length(brkpnt) - 1]
 endpnt <- brkpnt[2:length(brkpnt)]
 brk_lab <- paste(startpnt, '° to ', endpnt, '°', sep = '')
@@ -139,7 +139,7 @@ obs <- reshape2::melt(obs, na.rm=F, id.vars = c("lat","lon","REF", "lat_band"), 
 # undo with: dcast(obs, lat + lon + REF + lat_band ~ var, value.var = "value")
 obs$REF <- factor(obs$REF , levels=c("CL_all", "CL", "BP")) # reorder boxplots bottom to top
 
-bp <- ggplot(na.omit(obs), aes(x=lat_band, y=value, fill=REF)) + 
+bp <- ggplot(na.omit(obs), aes(x=lat_band, y=value, fill=REF)) +
   geom_boxplot(aes(fill=REF),outlier.alpha = 0.5, outlier.size = 0.5, outlier.colour = "grey86",
                width = 0.8, varwidth=F, lwd=0.01,position = position_dodge2(preserve = "single")) +
   theme_bw()+
@@ -151,7 +151,7 @@ bp <- ggplot(na.omit(obs), aes(x=lat_band, y=value, fill=REF)) +
         legend.box = "horizontal", legend.text.align=0)+
   scale_fill_manual(name = element_blank(),
                     breaks = c('BP', 'CL', 'CL_all'),
-                    labels = c(expression('Bartlein + Prentice'), expression('Cleator'), 
+                    labels = c(expression('Bartlein + Prentice'), expression('Cleator'),
                                expression('Cleator all')),
                     values = c('orange', 'steelblue4', 'cyan3')) +
   facet_grid(.~ var,scales='free') +
@@ -159,7 +159,7 @@ bp <- ggplot(na.omit(obs), aes(x=lat_band, y=value, fill=REF)) +
 
 print(bp)
 
-ggsave(bp,file=paste(plotpath,"DM_boxplots/boxplot_data_B_CL244.jpg", sep=""),width=12,height=7)
+ggsave(bp,file=paste(plotpath,"DM_boxplots/Landboxplot_data_B_CL244.jpg", sep=""),width=12,height=7)
 
 #### BOXPLOT #2: observations and model data ####
 
@@ -170,16 +170,17 @@ mod_dir <- ncpath
 mod_files <- list.files(mod_dir, pattern = "anomalies", full.names = TRUE)
 
 # create list of model names for output
-model_ls <- lapply(list.files(mod_dir, pattern="anomalies", full.names = F), FUN = my_name_trim) %>% as.character (.) 
+model_ls <- lapply(list.files(mod_dir, pattern="anomalies", full.names = F), FUN = my_name_trim) %>% as.character (.)
 
 
 #print(model_ls)
 obs_coord = unique(obs[,1:2])
+print(colnames(obs))
 
 for (mod_name in model_ls){
   
-  ncname <- paste(ncpath, mod_name, "_LGM_anomalies.nc",sep="") 
-  ncin <- nc_open(ncname) 
+  ncname <- paste(ncpath, mod_name, "_LGM_anomalies.nc",sep="")
+  ncin <- nc_open(ncname)
   lat <- ncin[["dim"]][["lat"]][["vals"]]; nlat <- length(lat)
   lon <- ncin[["dim"]][["lon"]][["vals"]];nlon <- length(lon)
   grid <- expand.grid(lon=lon, lat=lat)
@@ -193,7 +194,7 @@ for (mod_name in model_ls){
     j <- sapply(obs_coord$lon, function(x) which.min(abs(lon - x)))
     k <- sapply(obs_coord$lat, function(x) which.min(abs(lat - x)))
     
-    var_vec <- as.vector(var) 
+    var_vec <- as.vector(var)
     
     # extract data for all locations
     jk <- (k - 1) * nlon + j  #jk <- (j-1)*nlat + k
@@ -218,7 +219,7 @@ nc_close(ncin)
 pts$lat_band <- cut(pts$lat, breaks = brkpnt,labels = brk_lab)
 
 # rename vars
-pts <- data.frame(lapply(pts, function(x) {gsub("tas_anom", "MAT", x)})) 
+pts <- data.frame(lapply(pts, function(x) {gsub("tas_anom", "MAT", x)}))
 pts <- data.frame(lapply(pts, function(x) {gsub("mtco_anom", "MTCO", x)}))
 pts <- data.frame(lapply(pts, function(x) {gsub("mtwa_anom", "MTWA", x)}))
 pts <- data.frame(lapply(pts, function(x) {gsub("pre_anom", "MAP", x)}))
@@ -234,7 +235,7 @@ data_all$lat <- as.numeric(data_all$lat)
 data_all$lon <- as.numeric(data_all$lon)
 data_all$value <- as.numeric(data_all$value)
 data_all$var <- as.factor(data_all$var)
-data_all$REF <- factor(data_all$REF , 
+data_all$REF <- factor(data_all$REF ,
                        levels= c(rev(as.character(model_ls)), "CL_all", "BP"))
 data_all$lat_band <- factor(data_all$lat_band, levels = brk_lab[2:8])
 
@@ -249,20 +250,20 @@ colorSet <- rev(c(n[1:2],'grey75', 'grey40',n[3:length(n)]))
 require(facetscales) # install with devtools::install_github("zeehio/facetscales")
 #set limits for each variable (only possible with facetscales)
 scales_y <- list(
-    GDD5 = scale_y_continuous(breaks=scales::extended_breaks(n=3),limits=c(1500,-4000)),
-    MAP = scale_y_continuous(breaks=scales::extended_breaks(n=5),limits=c(1500,-1500)),
-    MAT = scale_y_continuous(breaks=scales::extended_breaks(n=4),limits=c(10,-20)),
-    MTWA = scale_y_continuous(breaks=scales::extended_breaks(n=4),limits=c(10,-20)),
-    MTCO = scale_y_continuous(breaks=scales::extended_breaks(n=4),limits=c(10,-30))
-  )
+  GDD5 = scale_y_continuous(breaks=scales::extended_breaks(n=3),limits=c(1500,-4000)),
+  MAP = scale_y_continuous(breaks=scales::extended_breaks(n=5),limits=c(1500,-1500)),
+  MAT = scale_y_continuous(breaks=scales::extended_breaks(n=4),limits=c(10,-20)),
+  MTWA = scale_y_continuous(breaks=scales::extended_breaks(n=4),limits=c(10,-20)),
+  MTCO = scale_y_continuous(breaks=scales::extended_breaks(n=4),limits=c(10,-30))
+)
 
 scales_x <- list(
   name = scale_x_discrete()
 )
 
-bp <-ggplot(na.omit(data_all), aes(x=lat_band, y=value, fill=var)) + 
+bp <-ggplot(na.omit(data_all), aes(x=lat_band, y=value, fill=var)) +
   geom_hline(yintercept = 0, linetype="solid", color = "black", size=0.5) +
-  geom_boxplot(aes(fill=REF),outlier.alpha = 0.8, outlier.size = 0.5, outlier.colour = "grey86", 
+  geom_boxplot(aes(fill=REF),outlier.alpha = 0.8, outlier.size = 0.5, outlier.colour = "grey86",
                width = 0.8, varwidth=F,lwd=0.2,fatten=1,position = position_dodge2(preserve = "single")) +
   theme_bw()+
   theme(axis.title.x=element_blank(),
@@ -271,13 +272,13 @@ bp <-ggplot(na.omit(data_all), aes(x=lat_band, y=value, fill=var)) +
         axis.text.y = element_text(angle = -90, vjust = -0.1, hjust=0.5,size=13,face="bold"),
         legend.position="left") +
   guides(fill = guide_legend(reverse = TRUE,
-                             direction = "vertical", 
+                             direction = "vertical",
                              nrow = 5,
                              ncol = 3,
-                             label.position = "bottom", 
+                             label.position = "bottom",
                              legend.box.just = "right",
                              #legend.text.align=0,
-                             label.theme = element_text(angle = -90, vjust = 0.5, hjust=0,size=10), 
+                             label.theme = element_text(angle = -90, vjust = 0.5, hjust=0,size=10),
                              title.position = "bottom", title.theme = element_text(angle = 90)))+
   
   scale_x_discrete(position = "top") +
@@ -296,16 +297,17 @@ bp <-ggplot(na.omit(data_all), aes(x=lat_band, y=value, fill=var)) +
 
 bp
 
-ggsave(bp,file=paste(plotpath,"DM_boxplots/boxplot_data_model.jpg", sep=""),width=11,height=14)
+ggsave(bp,file=paste(plotpath,"DM_boxplots/Landboxplot_data_model.jpg", sep=""),width=11,height=14)
 #ggsave(bp,file=paste(plotpath,"DM_boxplots/boxplot_data_model.pdf", sep=""),width=11,height=14)
 
 
 # extract statistical summary of all variables used in the boxplot
 br <- c("CL_all", "BP", as.character(model_ls))
 for (i in br){
-x1 <- data_all %>% filter (data_all$REF == i)
-sum_obs = summary(dcast(x1, lat + lon + lat_band ~ var, value.var = "value"))
-write.csv(sum_obs, paste(datapath, "summary_mod_boxplot_",i,".csv", sep=""))
+  x1 <- data_all %>% filter (data_all$REF == i)
+  sum_obs = summary(dcast(x1, lat + lon + lat_band ~ var, value.var = "value"))
+  write.csv(sum_obs, paste(datapath, "summary_mod_boxplot_",i,".csv", sep=""))
 }
+
 
 graphics.off()
